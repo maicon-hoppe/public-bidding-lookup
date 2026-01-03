@@ -1,0 +1,56 @@
+/*  Color Scheme (light-dark)   */
+/* Primary:   #220A29 - #621D77 */
+/* Secondary: #351825 - #9E4770 */
+/* Accent:    #AD6B00 - #FFBA49 */
+
+:root {
+    color-scheme: light dark;
+
+	--text-color: light-dark(hsl(0 0 10), hsl(0 0 90));
+
+	--primary-color: light-dark(hsl(286, 61%, 10%), hsl(286, 61%, 29%));
+	--secondary-color: light-dark(hsl(333, 38%, 15%), hsl(332, 38%, 45%));
+	--accent-color: light-dark(hsl(37, 100%, 34%), hsl(37, 100%, 64%));
+
+	--background: light-dark(hsl(0 0 95), hsl(0 0 5));
+	--background-10: light-dark(hsl(0 0 85), hsl(0 0 15));
+
+    --heading-size: 2em;
+    --text-size: 1em;
+
+	--heading-space: 10px;
+
+	--default-bradius: 10px;
+}
+
+.light-theme { color-scheme: only light; }
+.dark-theme { color-scheme: only dark; }
+
+* {
+	padding: 0px;
+	margin: 0px;
+
+	box-sizing: border-box;
+	vertical-align: middle;
+}
+
+body {
+    height: 100dvh;
+    width: 98dvw;
+
+	font: var(--text-size) sans-serif;
+	color: var(--text-color);
+	background-color: var(--background);
+
+	h1 { margin: var(--heading-space); }
+
+	.default-button {
+		padding: 5px;
+
+		border: none;
+		border-radius: var(--default-bradius);
+
+		color: var(--text-color);
+		background-color: var(--primary-color);
+	}
+}
