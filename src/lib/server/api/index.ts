@@ -3,7 +3,8 @@ import type { ContractsResponse } from "$lib/types";
 export async function getAPIContracts(
     dataVigenciaInicialMin: Date,
     dataVigenciaInicialMax: Date,
-    tamanhoPagina: number = 10
+    pagina: number = 1,
+    tamanhoPagina: number = 10 // Minimum
 ) {
     let ISODate;
 
@@ -20,7 +21,7 @@ export async function getAPIContracts(
         contractsRequest = await fetch(contractsURL, {
             method: "GET", headers: new Headers({
                 accept: "application/json",
-                pagina: "1",
+                pagina: pagina.toString(),
                 tamanhoPagina: tamanhoPagina.toString()
             })
         });
@@ -37,16 +38,12 @@ export async function getAPIContracts(
     }
     catch (e)
     {
-        if (e instanceof SyntaxError)
-        {
-            contracts = {
-                resultado: [],
-                totalRegistros: 0,
-                totalPaginas: 0,
-                paginasRestantes: 0
-            }
+        contracts = {
+            resultado: [],
+            totalRegistros: 0,
+            totalPaginas: 0,
+            paginasRestantes: 0
         }
-        else { throw new Error(e) }
     }
 
     return contracts;

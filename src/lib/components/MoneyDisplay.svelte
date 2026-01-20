@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BRLCurrencyFormatter as BRLCurrency } from "$lib/utils";
-    const { value } = $props();
+    const { value }: { value: number } = $props();
 </script>
 
 <dl class="light-theme">

@@ -1,5 +1,5 @@
 {
-  "id": "585f7183-bfeb-4958-bf20-09ee904d8348",
+  "id": "e14eab03-c0c4-4a71-b34a-1f69e99bae0d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -16,18 +16,24 @@
         },
         "vigencia_inicial": {
           "name": "vigencia_inicial",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
         },
         "vigencia_final": {
           "name": "vigencia_final",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "orgao": {
           "name": "orgao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unidade_gestora": {
+          "name": "unidade_gestora",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -42,17 +48,17 @@
           "name": "ni_fornecedor",
           "type": "varchar(14)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "fornecedor": {
           "name": "fornecedor",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "valor_global": {
           "name": "valor_global",
-          "type": "money",
+          "type": "numeric(11, 2)",
           "primaryKey": false,
           "notNull": true
         },

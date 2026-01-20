@@ -18,8 +18,8 @@ export type Contract = {
     nomeCategoria: string,
     codigoSubcategoria?: string,
     nomeSubcategoria?: string,
-    niFornecedor: string,
-    nomeRazaoSocialFornecedor: string,
+    niFornecedor?: string,
+    nomeRazaoSocialFornecedor?: string,
     processo: string,
     objeto: string,
     informacoesComplementares?: string,
@@ -36,29 +36,34 @@ export type Contract = {
     dataHoraExclusao?: string, // "2025-12-29T00:57:24.027Z",
     contratoExcluido: boolean,
     unidadesRequisitantes: string
-}
+};
 
 export type ContractsResponse = {
-    resultado: [
-        Contract?
-    ],
+    resultado: Contract[],
     totalRegistros: number,
     totalPaginas: number,
     paginasRestantes: number
-}
+};
 
 export type TableContract = Pick<Contract,
                         "nomeOrgao"
+                        | "nomeUnidadeGestora"
                         | "nomeUnidadeRealizadoraCompra"
                         | "niFornecedor"
                         | "nomeRazaoSocialFornecedor"
-                        | "valorGlobal"
                         | "objeto"
                         | "informacoesComplementares"
                         | "nomeCategoria"
                         | "nomeTipo"
                         | "nomeModalidadeCompra"
                         > & {
+                            "id"?: number,
                             "dataVigenciaInicial": Date,
-                            "dataVigenciaFinal": Date
-                        }
+                            "dataVigenciaFinal"?: Date,
+                            "valorGlobal": string
+                        };
+
+export type LocalContractRequestParameters = {
+    quantity: number,
+    offset: number
+};
