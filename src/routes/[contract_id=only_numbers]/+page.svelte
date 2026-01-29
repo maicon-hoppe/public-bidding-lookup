@@ -5,7 +5,7 @@
 
     let contract_idx = $derived(+data.contract_id);
     const contract = $derived(
-        data.contracts.find((contract) => contract.id === contract_idx),
+        data.contracts.find((contract) => contract?.id === contract_idx),
     );
     const contract_info = $derived(
         contract ? Object.entries(contract) : ["nada", 0],
@@ -16,7 +16,7 @@
 <a href="/{contract_idx + 1}" class="default-button">Próximo</a>
 <a href="/" class="default-buttobh">Voltar</a>
 <hr />
-<MoneyDisplay value={+contract.valorGlobal} />
+<MoneyDisplay value={contract ? +contract.valorGlobal : NaN} />
 <dl>
     {#each contract_info as [chave, info]}
         <dt>{chave}</dt>

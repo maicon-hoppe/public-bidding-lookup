@@ -3,10 +3,9 @@ import * as DB from "$lib/server/db/index";
 import * as API from "$lib/server/api/index";
 
 import type { LocalContractRequestParameters } from "$lib/types";
-import { contractToTableFormat } from "$lib/utils.js";
+import { contractToTableFormat } from "$lib/server/utils.js";
 
-export async function GET({ request })
-{
+export async function GET({ request }) {
     const requestUrl = new URL(request.url);
     const requestParams = Object.fromEntries(
         requestUrl.searchParams.entries().map(
@@ -19,17 +18,14 @@ export async function GET({ request })
         Object.keys(requestParams).length === validParams.size
         && Object.keys(requestParams).every(
             (param) => validParams.has(param)
-    );
-    if ( requestParametersHaveCorrectShape )
-    {
+        );
+    if (requestParametersHaveCorrectShape) {
         const MAX_RESPONSE_SIZE = 20;
-        if (1 <= requestParams.quantity && requestParams.quantity <= MAX_RESPONSE_SIZE)
-        {
+        if (1 <= requestParams.quantity && requestParams.quantity <= MAX_RESPONSE_SIZE) {
             const dbContracts = await DB.getDBContracts(requestParams.quantity, requestParams.offset);
 
-            if ( dbContracts.length === requestParams.quantity ) { return json(dbContracts); }
-            else if ( 0 < dbContracts.length && dbContracts.length < requestParams.quantity )
-            {
+            if (dbContracts.length === requestParams.quantity) { return json(dbContracts); }
+            else if (0 < dbContracts.length && dbContracts.length < requestParams.quantity) {
                 const lastcontract = dbContracts.at(-1);
                 const endDate = new Date(lastcontract!.dataVigenciaInicial);
                 endDate.setMonth(endDate.getMonth() + 1);
@@ -44,16 +40,15 @@ export async function GET({ request })
                 let contractIdOffset = 0;
                 const lastContractId = (await DB.getDBContractData(-1, true))?.id;
                 const formattedAPIContracts = api_response.resultado
-                                                .slice(-(requestParams.quantity - dbContracts.length))
-                                                .map(contract => 
-                                                {
-                                                    const tableContract = contractToTableFormat(contract);
-                                                    tableContract.id = lastContractId ?
-                                                        lastContractId + ++contractIdOffset
-                                                        : ++contractIdOffset;
-                                                    
-                                                    return tableContract;
-                                                });
+                    .slice(-(requestParams.quantity - dbContracts.length))
+                    .map(contract => {
+                        const tableContract = contractToTableFormat(contract);
+                        tableContract.id = lastContractId ?
+                            lastContractId + ++contractIdOffset
+                            : ++contractIdOffset;
+
+                        return tableContract;
+                    });
 
                 return json(dbContracts.concat(formattedAPIContracts));
             }

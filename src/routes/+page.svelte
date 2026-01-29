@@ -1,25 +1,70 @@
 <script lang="ts">
     import InfoTile from "$lib/components/InfoTile.svelte";
-    import { Chart } from "chart.js";
+    import LineChart from "$lib/components/LineChart.svelte";
+    import DistributionChart from "$lib/components/DistributionChart.svelte";
+    import type { TableContract } from "$lib/types";
+    import { BRLCurrencyFormatter } from "$lib/utils";
 
     const { data } = $props();
 
-    let page_start = $state(0);
-    let page_end = $state(9);
+    let pageStart = $state(0);
+    let pageEnd = $state(9);
+    let pageSelectorOffset = $state(0);
     const contracts = $derived(data.contracts);
-    const current_page = $derived(contracts.slice(page_start, page_end));
+    const currentPage = $derived(contracts.slice(pageStart, pageEnd));
+
+    const recentExpenses = $derived(data.monthlyExpenses.filter((value) => value.dia.getDate() <= new Date().getDate()));
+    const lineChartLabels = $derived(recentExpenses.map((dataPoint) => dataPoint.dia.toLocaleDateString("pt-BR")));
+    const lineChartValues = $derived(recentExpenses.map(({dia, total}) => ({x: dia.getDate(), y: total})));
+
+    const expensesDistribution = $derived(data.expensesDistribution);
+    const barChartLabels = $derived(expensesDistribution.map((dataPoint) =>
+    {
+        const formatted: string[] = [];
+        const interval_string = dataPoint.part.split(" ");
+        const lowerLimit = BRLCurrencyFormatter
+            .formatToParts(+(interval_string[0]))
+            .slice(0, 3)
+            .map(({ type, value }) => value)
+            .join('');
+
+        formatted.push(+(interval_string[0]) === 0 ? lowerLimit : lowerLimit + " M");
+        formatted.push(interval_string[1]);
+        formatted.push(BRLCurrencyFormatter
+            .formatToParts(+(interval_string[2]))
+            .slice(0, 3)
+            .map(({ type, value }) => value)
+            .join('')
+            + " M"
+        );
+
+        return formatted.join(" ")
+    }));
+    const barChartValues = $derived(expensesDistribution.map((dataPoint) => dataPoint.quantity));
 </script>
 
 <header>
     <h1>Contratos</h1>
-    <button onclick={() => { document.body.classList.toggle("light-theme") }}>Fundo</button>
+    <button class="default-button" onclick={() =>
+    {
+        const isDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDarkThemeSelected = document.body.classList.contains("dark-theme");
+        if (isDarkTheme || isDarkThemeSelected)
+        {
+            document.body.classList.toggle("light-theme");
+            document.body.classList.remove("dark-theme");
+        }
+        else
+        {
+            document.body.classList.toggle("dark-theme");
+        }
+    }}>Fundo</button>
 </header>
 <hr>
-
 <main>
     <aside>
-        <div id="graph1">foo</div>
-        <div id="graph2">bar</div>
+        <LineChart labels={lineChartLabels} values={lineChartValues} />
+        <DistributionChart labels={barChartLabels} values={barChartValues}/>
     </aside>
     <section>
         <div id="search-filter">
@@ -27,26 +72,32 @@
         </div>
         <div id="contract-page-selector">
             {#each { length: 10 }, page}
-                <label for="page{page+1}">{page+1}</label>
-                {#if page == 0}
-                    <input checked
-                        type="radio" name="page" id="page{page+1}"
-                        onclick={() => { page_start = 0+10*page; page_end = 9+10*page; }}
-                    >
-                {:else}
-                    <input
-                        type="radio" name="page" id="page{page+1}"
-                        onclick={() => { page_start = 0+10*page; page_end = 9+10*page; }}
-                    >
-                {/if}
+                <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+                <label for="page{page+1}" tabindex="0">
+                    {page === 0 && pageSelectorOffset ? "<<" : page+1+pageSelectorOffset}
+                </label>
+                <input checked={page === 0}
+                    type="radio" name="page" id="page{page+1}"
+                    onclick={() =>
+                    {
+                        pageStart = 0+10*(page+pageSelectorOffset);
+                        pageEnd = 9+10*(page+pageSelectorOffset);
+                    }}
+                >
             {/each}
-            <label for="next_page">>></label>
+            <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+            <label for="next_page" tabindex="0">>></label>
             <input
                 type="radio" name="page" id="next_page"
+                onclick={async (_) =>
+                {
+                    const fetchedPage = await fetch(`/contracts?quantity=10&offset=${10 * ++pageSelectorOffset}`);
+                    (await fetchedPage.json()).forEach((newContract: TableContract) => contracts.push(newContract));
+                }}
             >
         </div>
         <div id="contract-list">
-            {#each current_page as contract}
+            {#each currentPage as contract}
                 <InfoTile {contract} />
             {/each}
         </div>
@@ -64,7 +115,6 @@
     main {
         display: flex;
         height: 90dvh;
-        max-width: fit-content;
         margin-top: 5px;
 
         & > section {
@@ -95,13 +145,6 @@
                 }
             }
         }
-
-        & > aside > :where(#graph1, #graph2) {
-            margin: 5px;
-            border: 1px solid var(--text-color);
-            background-color: var(--background-10);
-            box-shadow: 1px 2px 2px var(--dark-text-color);
-        }
     }
 
     input[type="radio"] { display: none; }
@@ -116,10 +159,6 @@
                 height: 90dvh;
                 width: 35dvw;
                 /* min-width: 312px; */
-
-                #graph1, #graph2 {
-                    height: 40dvh;
-                }
             }
 
             section {
@@ -145,10 +184,9 @@
         main {
             flex-flow: column nowrap;
 
-            aside > :where(#graph1, #graph2) {
-                display: inline-block;
-                width: 46dvw;
-            }
+            /* aside {
+                margin: auto;
+            } */
 
             section {
                 & > :where(#search-filter, #contract-page-selector) {

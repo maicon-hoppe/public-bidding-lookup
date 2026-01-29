@@ -3,13 +3,93 @@ import postgres from 'postgres';
 import * as schema from './schema';
 import { env } from '$env/dynamic/private';
 import type { TableContract } from '$lib/types';
-import { desc, eq, sql } from 'drizzle-orm';
+import { count, desc, eq, sql } from 'drizzle-orm';
 
 if (!env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
 
 const client = postgres(env.DATABASE_URL);
 
 export const db = drizzle(client, { schema });
+
+export async function getDBMonthlyExpensesDistribution(parts: number)
+{
+    if (parts <= 1)
+    {
+        return await (db
+            .select({
+                quantity: sql<number>`count(*)`.mapWith(Number),
+                part: sql<string>`FORMAT('0.00 -| %s', MAX(${schema.contractsTable.valorGlobal}))`.as("maior_valor")
+            })
+            .from(schema.contractsTable)
+        );
+    }
+
+    const upperLimit = db.$with("limite_superior").as(db
+        .select({
+            maior_valor: sql<number>`MAX(${schema.contractsTable.valorGlobal})`.as('maior_valor')
+        })
+        .from(schema.contractsTable)
+    );
+
+    let partList: {
+        quantity: number;
+        part: string;
+    }[] = [];
+    for (let index = 1; index <= parts; index++)
+    {
+        const valueInterval = db.$with("intervalo").as(db
+            .select({
+                inicio: sql<number>`(maior_valor * ${index - 1}/${parts})::NUMERIC(11,2)`.as('inicio'),
+                fim: sql<number>`(maior_valor * ${index}/${parts})::NUMERIC(11,2)`.as('fim')
+            })
+            .from(upperLimit)
+        );
+
+        const fraction = await db.with(upperLimit, valueInterval)
+            .select({
+                quantity: count(schema.contractsTable.valorGlobal),
+                part: sql<string>`FORMAT('%s à %s', i.inicio, i.fim)`.as('parte')
+            })
+            .from(sql`intervalo AS i`)
+            .leftJoin(
+                schema.contractsTable,
+                sql<boolean>`
+                    ${schema.contractsTable.valorGlobal} > i.inicio
+                    AND ${schema.contractsTable.valorGlobal} <= i.fim
+            `)
+            .groupBy(sql`i.inicio, i.fim`);
+
+        partList.push(fraction[0]);
+    }
+
+    return partList;
+}
+
+export async function getDBMonthlyCurrentExpenses()
+{
+    const finalDate = db.$with("data_final").as(db
+        .select({
+            maior_data: sql<Date>`MAX(${schema.contractsTable.dataVigenciaInicial})`.as('maior_data')
+        })
+        .from(schema.contractsTable)
+    );
+
+    return await (db.with(finalDate)
+        .select({
+            dia: sql<Date>`DATE_TRUNC('day', ${schema.contractsTable.dataVigenciaInicial})::DATE`
+                .mapWith(schema.contractsTable.dataVigenciaInicial).as('dia'),
+            total: sql<number>`SUM(${schema.contractsTable.valorGlobal})`
+                .mapWith(Number).as('total')
+        })
+        .from(sql`${schema.contractsTable}, data_final`)
+        .where(sql`
+            ${schema.contractsTable.dataVigenciaInicial} >= DATE_TRUNC('month', maior_data)::DATE
+            AND ${schema.contractsTable.dataVigenciaInicial} < maior_data + INTERVAL '1 day'
+        `)
+        .groupBy(sql`dia`)
+        .orderBy(sql`dia`)
+    )
+}
 
 export async function getDBContractData(id: number, onlyContract: boolean = false)
 {
