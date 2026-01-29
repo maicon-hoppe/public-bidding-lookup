@@ -2,6 +2,7 @@ test-results
 node_modules
 color_pallete.png
 package-lock.json
+.pgpass
 
 # Output
 .output
