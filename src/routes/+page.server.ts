@@ -4,6 +4,6 @@ export async function load()
 {
     return {
         monthlyExpenses: await DB.getDBMonthlyCurrentExpenses(),
-        expensesDistribution: await DB.getDBMonthlyExpensesDistribution(10)
+        expensesDistribution: await DB.getDBExpensesDistribution(10)
     };
 }

@@ -16,6 +16,7 @@
         tooltip = tippy(icone,
         {
             content: content,
+            delay: 300,
             theme: mq.matches ? 'material' : 'light'
         });
 
@@ -29,13 +30,12 @@
         {
             for (const mutation of mutationList)
             {
-                // @ts-ignore: The type is wrong
-                if (mutation.target.classList.contains('dark-theme'))
+                const element = mutation.target as HTMLElement;
+                if (element.classList.contains('dark-theme'))
                 {
                     tooltip.setProps({ theme: 'material' })
                 }
-                // @ts-ignore: The type is wrong
-                else if (mutation.target.classList.contains('light-theme'))
+                else if (element.classList.contains('light-theme'))
                 {
                     tooltip.setProps({ theme:'light' })
                 }

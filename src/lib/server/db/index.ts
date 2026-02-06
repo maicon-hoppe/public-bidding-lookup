@@ -11,7 +11,7 @@ const client = postgres(env.DATABASE_URL);
 
 export const db = drizzle(client, { schema });
 
-export async function getDBMonthlyExpensesDistribution(parts: number)
+export async function getDBExpensesDistribution(parts: number)
 {
     if (parts <= 1)
     {
@@ -76,7 +76,7 @@ export async function getDBMonthlyCurrentExpenses()
 
     return await (db.with(finalDate)
         .select({
-            dia: sql<Date>`DATE_TRUNC('day', ${schema.contractsTable.dataVigenciaInicial})::DATE`
+            dia: sql<Date>`${schema.contractsTable.dataVigenciaInicial}::DATE`
                 .mapWith(schema.contractsTable.dataVigenciaInicial).as('dia'),
             total: sql<number>`SUM(${schema.contractsTable.valorGlobal})`
                 .mapWith(Number).as('total')
@@ -84,14 +84,14 @@ export async function getDBMonthlyCurrentExpenses()
         .from(sql`${schema.contractsTable}, data_final`)
         .where(sql`
             ${schema.contractsTable.dataVigenciaInicial} >= DATE_TRUNC('month', maior_data)::DATE
-            AND ${schema.contractsTable.dataVigenciaInicial} < maior_data + INTERVAL '1 day'
+            AND ${schema.contractsTable.dataVigenciaInicial} < (maior_data + INTERVAL '1 day')::DATE
         `)
         .groupBy(sql`dia`)
         .orderBy(sql`dia`)
     )
 }
 
-export async function getDBContractData(id: number, onlyContract: boolean = false)
+export async function getDBContractData(id: number)
 {
     let contract_list;
     if (id === 0) { id = 1 }

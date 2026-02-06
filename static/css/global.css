@@ -22,8 +22,8 @@
 
 	--primary-color-20: hsl(286, 61%, 49%);
 
-    --heading-size: 2em;
-    --text-size: 1em;
+    --heading-size: 2rem;
+    --text-size: 1rem;
 
 	--heading-space: 10px;
 
@@ -58,6 +58,9 @@ body {
 		display: inline-block;
 		padding: 5px;
 
+		cursor: pointer;
+		user-select: none;
+
 		border: none;
 		border-radius: var(--default-bradius);
 		box-shadow: 1px 1px 1px hsla(0, 0%, 0%, 0.30);
@@ -69,9 +72,23 @@ body {
 			text-decoration: none;
 		}
 		background-color: var(--primary-color);
+
+		&:hover {
+			background-color: var(--primary-color-20);
+		}
 	}
 
-	.default-button:hover {
-		background-color: var(--primary-color-20);
+	.secondary-button {
+		border: 2px solid var(--secondary-color);
+		border-radius: var(--default-bradius);
+		background-color: transparent;
+
+		cursor: pointer;
+		user-select: none;
+
+		&:hover {
+			background-color: var(--secondary-color);
+			svg { fill: var(--light-text-color); }
+		}
 	}
 }

@@ -38,7 +38,7 @@ export async function GET({ request }) {
                 );
 
                 let contractIdOffset = 0;
-                const lastContractId = (await DB.getDBContractData(-1, true))?.id;
+                const lastContractId = (await DB.getDBContractData(-1))?.id;
                 const formattedAPIContracts = api_response.resultado
                     .slice(-(requestParams.quantity - dbContracts.length))
                     .map(contract => {

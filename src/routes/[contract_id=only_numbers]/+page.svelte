@@ -19,11 +19,10 @@
 <MoneyDisplay value={contract ? +contract.valorGlobal : NaN} />
 <dl>
     {#each contract_info as [chave, info]}
-        <dt>{chave}</dt>
+        <dt><strong>{chave}</strong></dt>
         <dd>{info}</dd>
     {/each}
 </dl>
-<!-- {@debug data} -->
 
 <style>
     h1 {
