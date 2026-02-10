@@ -1,3 +1,5 @@
+import { boolean } from "drizzle-orm/gel-core";
+
 export type Contract = {
     codigoOrgao: string,
     nomeOrgao: string,
@@ -46,24 +48,42 @@ export type ContractsResponse = {
 };
 
 export type TableContract = Pick<Contract,
-                        "nomeOrgao"
-                        | "nomeUnidadeGestora"
-                        | "nomeUnidadeRealizadoraCompra"
-                        | "niFornecedor"
-                        | "nomeRazaoSocialFornecedor"
-                        | "objeto"
-                        | "informacoesComplementares"
-                        | "nomeCategoria"
-                        | "nomeTipo"
-                        | "nomeModalidadeCompra"
-                        > & {
-                            "id"?: number,
-                            "dataVigenciaInicial": Date,
-                            "dataVigenciaFinal"?: Date,
-                            "valorGlobal": string
-                        };
+    "nomeOrgao"
+    | "nomeUnidadeGestora"
+    | "nomeUnidadeRealizadoraCompra"
+    | "niFornecedor"
+    | "nomeRazaoSocialFornecedor"
+    | "objeto"
+    | "informacoesComplementares"
+    | "nomeCategoria"
+    | "nomeTipo"
+    | "nomeModalidadeCompra"
+> & {
+    "id"?: number,
+    "dataVigenciaInicial": Date,
+    "dataVigenciaFinal"?: Date,
+    "valorGlobal": string
+};
 
 export type LocalContractRequestParameters = {
     quantity: number,
     offset: number
+};
+
+export type FilterOptions = {
+    textSearch: {
+        text: string,
+        textOptions: [
+            "Comprador",
+            "Fornecedor",
+            "Unidade Gestora"
+        ],
+        selected: "Comprador" | "Fornecedor" | "Unidade Gestora"
+    },
+    filterSearch: {
+        title: string,
+        type: "date" | "checkbox",
+        choices: string[],
+        selected: string[]
+    }[]
 };

@@ -1,52 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import type { FilterOptions } from "$lib/types";
 
-    // const { data } = $props();
-
-    const filterOptions = [
-        {
-            title: "Data de Vigência",
-            type: "date",
-            choices: ["Vigência inicial", "Vigência final"],
-        },
-        {
-            title: "Categoria",
-            type: "checkbox",
-            choices: [
-                "Compras",
-                "Serviços",
-                "Serviços de Engenharia",
-                "Serviços de Saúde",
-                "Obras",
-                "Mão de Obra",
-                "Informática (TIC)",
-            ],
-        },
-        {
-            title: "Tipo",
-            type: "checkbox",
-            choices: [
-                "Contrato",
-                "Termo de Adesão",
-                "Acordo de Cooperação Técnica (ACT)",
-                "Credenciamento",
-                "Concessão",
-                "Empenho",
-                "Outros",
-            ],
-        },
-        {
-            title: "Modalidade",
-            type: "checkbox",
-            choices: [
-                "Pregão",
-                "Concorrência",
-                "Inexigibilidade",
-                "Dispensa",
-                "Não se aplica",
-            ],
-        },
-    ];
+    const { filters = $bindable() }: { filters: FilterOptions } = $props();
 
     let searchConfigButtonChecked = $state(true);
     let searchConfigMenu: HTMLMenuElement;
@@ -89,7 +45,12 @@
 <search>
     <div>
         <div id="search-box">
-            <input type="text" id="search-input" placeholder="Pesquisar..." />
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Pesquisar..."
+                bind:value={filters.textSearch.text}
+            />
             <label for="config-search">
                 <input
                     type="checkbox"
@@ -128,18 +89,19 @@
             aria-labelledby="config-button"
             bind:this={searchConfigMenu}
         >
-            <li>
-                <input type="radio" name="search-text" id="comprador" checked />
-                <label for="comprador">Comprador</label>
-            </li>
-            <li>
-                <input type="radio" name="search-text" id="fornecedor" />
-                <label for="fornecedor">Fornecedor</label>
-            </li>
-            <li>
-                <input type="radio" name="search-text" id="unidade_gestora" />
-                <label for="unidade_gestora">Unidade gestora</label>
-            </li>
+            {#each filters.textSearch.textOptions as option}
+                <li>
+                    <input
+                        type="radio"
+                        name="search-text"
+                        id={option.toLowerCase()}
+                        checked={option === filters.textSearch.selected}
+                        value={option}
+                        bind:group={filters.textSearch.selected}
+                    />
+                    <label for={option.toLowerCase()}>{option}</label>
+                </li>
+            {/each}
         </menu>
     </div>
 
@@ -176,7 +138,7 @@
         aria-labelledby="filter-button"
         bind:this={filterOptionsMenu}
     >
-        {#each filterOptions as option}
+        {#each filters.filterSearch as option}
             <li>
                 <details>
                     <summary>{option.title}</summary>
@@ -192,15 +154,26 @@
                                                 .replace(" ", "_")
                                                 .replace("ê", "e")
                                                 .toLowerCase()}
+                                            bind:value={
+                                                option.selected[
+                                                    option.choices.indexOf(
+                                                        choice,
+                                                    )
+                                                ]
+                                            }
                                         />
                                     </label>
                                 </li>
                             {/each}
-                        {:else}
+                        {:else if option.type === "checkbox"}
                             {#each option.choices as choice}
                                 <li>
                                     <label>
-                                        <input type={option.type} />
+                                        <input
+                                            type="checkbox"
+                                            value={choice}
+                                            bind:group={option.selected}
+                                        />
                                         {choice}
                                     </label>
                                 </li>

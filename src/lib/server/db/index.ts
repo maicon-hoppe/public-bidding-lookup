@@ -133,7 +133,7 @@ export async function getDBContracts(quantity?: number, offset?: number)
         return await (db
             .select()
             .from(schema.contractsTable)
-            .orderBy(schema.contractsTable.dataVigenciaInicial,
+            .orderBy(desc(schema.contractsTable.dataVigenciaInicial),
                      schema.contractsTable.id)
             .limit(quantity)
             .offset(offset)) as TableContract[];
@@ -143,7 +143,7 @@ export async function getDBContracts(quantity?: number, offset?: number)
         return await (db
             .select()
             .from(schema.contractsTable)
-            .orderBy(schema.contractsTable.dataVigenciaInicial,
+            .orderBy(desc(schema.contractsTable.dataVigenciaInicial),
                      schema.contractsTable.id)
             .limit(quantity)) as TableContract[];
     }
@@ -152,7 +152,7 @@ export async function getDBContracts(quantity?: number, offset?: number)
         return await (db
             .select()
             .from(schema.contractsTable)
-            .orderBy(schema.contractsTable.dataVigenciaInicial,
+            .orderBy(desc(schema.contractsTable.dataVigenciaInicial),
                      schema.contractsTable.id)
             .offset(offset)) as TableContract[];
     }
@@ -160,7 +160,7 @@ export async function getDBContracts(quantity?: number, offset?: number)
     return await (db
         .select()
         .from(schema.contractsTable)
-        .orderBy(schema.contractsTable.dataVigenciaInicial,
+        .orderBy(desc(schema.contractsTable.dataVigenciaInicial),
                  schema.contractsTable.id)
     ) as TableContract[];
 }

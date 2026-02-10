@@ -13,8 +13,13 @@
     } from "chart.js";
     import { onMount } from "svelte";
     import type { ChartData, ChartConfiguration, Point } from "chart.js";
+    import { getRelativePosition } from "chart.js/helpers";
 
-    const { labels, values }: { labels: string[]; values: Point[] } = $props();
+    let {
+        labels,
+        values,
+        selected = $bindable(),
+    }: { labels: string[]; values: Point[]; selected: string } = $props();
 
     Chart.register(
         CategoryScale,
@@ -46,7 +51,7 @@
             accent: mq.matches ? "hsl(37, 100%, 64%)" : "hsl(37, 100%, 34%)",
         };
 
-        const this_month = new Date().toLocaleDateString("pt-BR", {
+        const thisMonth = new Date().toLocaleDateString("pt-BR", {
             month: "long",
         });
         const chartConfig: ChartConfiguration<"line"> = {
@@ -107,10 +112,24 @@
                         },
                     },
                 },
+                interaction: {
+                    mode: "x",
+                    intersect: true,
+                },
+                onClick: (e) => {
+                    const canvasPosition = getRelativePosition(e, chart);
+                    selected = chart.scales.x
+                        .getLabelForValue(
+                            chart.scales.x.getValueForPixel(canvasPosition.x)!,
+                        )
+                        .split("/")
+                        .toReversed()
+                        .join("-");
+                },
                 plugins: {
                     title: {
                         display: true,
-                        text: `DESPESAS DIÁRIAS EM CONTRATOS VIGENTES (${this_month.toUpperCase()})`,
+                        text: `DESPESAS DIÁRIAS EM CONTRATOS VIGENTES (${thisMonth.toUpperCase()})`,
                         color: systemColors.text,
                     },
                     legend: { display: false },

@@ -27,3 +27,10 @@ export function niFormatter(ni: string) {
 
     return ni;
 }
+
+export function filterFromList<T>(value: T, filterList: T[]) {
+    return (
+        filterList.length === 0 ||
+        filterList.includes(value)
+    );
+}

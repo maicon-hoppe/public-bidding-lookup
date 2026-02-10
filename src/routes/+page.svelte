@@ -3,18 +3,160 @@
     import LineChart from "$lib/components/LineChart.svelte";
     import DistributionChart from "$lib/components/DistributionChart.svelte";
     import ContractsFilter from "$lib/components/ContractsFilter.svelte";
-    import type { TableContract } from "$lib/types";
-    import { BRLCurrencyFormatter } from "$lib/utils";
+    import { BRLCurrencyFormatter, filterFromList } from "$lib/utils";
     import { fly } from "svelte/transition";
+    import type { FilterOptions, TableContract } from "$lib/types";
 
     const { data } = $props();
 
     let headerVisible = $state(true);
+    let mainElement: HTMLElement;
+
+    let filters: FilterOptions = $state({
+        textSearch: {
+            text: "",
+            textOptions: ["Comprador", "Fornecedor", "Unidade Gestora"],
+            selected: "Comprador",
+        },
+        filterSearch: [
+            {
+                title: "Data de Vigência",
+                type: "date",
+                choices: ["Vigência inicial", "Vigência final"],
+                selected: ["", ""],
+            },
+            {
+                title: "Categoria",
+                type: "checkbox",
+                choices: [
+                    "Compras",
+                    "Serviços",
+                    "Serviços de Engenharia",
+                    "Serviços de Saúde",
+                    "Obras",
+                    "Mão de Obra",
+                    "Informática (TIC)",
+                ],
+                selected: [],
+            },
+            {
+                title: "Tipo",
+                type: "checkbox",
+                choices: [
+                    "Contrato",
+                    "Termo de Adesão",
+                    "Acordo de Cooperação Técnica (ACT)",
+                    "Credenciamento",
+                    "Concessão",
+                    "Empenho",
+                    "Outros",
+                ],
+                selected: [],
+            },
+            {
+                title: "Modalidade",
+                type: "checkbox",
+                choices: [
+                    "Pregão",
+                    "Concorrência",
+                    "Inexigibilidade",
+                    "Dispensa",
+                    "Não se aplica",
+                ],
+                selected: [],
+            },
+        ],
+    });
 
     let pageStart = $state(0);
     let pageEnd = $state(9);
     let pageSelectorOffset = $state(0);
-    const contracts = $derived(data.contracts);
+    const contracts = $derived(
+        data.contracts.filter((value) => {
+            let filtersConditions: boolean[] = [];
+
+            const filterText = filters.textSearch.text.toUpperCase();
+            if (filters.textSearch.selected === "Comprador") {
+                filtersConditions.push(
+                    value.nomeUnidadeRealizadoraCompra
+                        .toUpperCase()
+                        .includes(filterText),
+                );
+            } else if (filters.textSearch.selected === "Fornecedor") {
+                filtersConditions.push(
+                    value.nomeRazaoSocialFornecedor
+                        ? value.nomeRazaoSocialFornecedor
+                              .toUpperCase()
+                              .includes(filterText)
+                        : false,
+                );
+            } else if (filters.textSearch.selected === "Unidade Gestora") {
+                filtersConditions.push(
+                    value.nomeUnidadeGestora.toUpperCase().includes(filterText),
+                );
+            }
+
+            const dateFilterOptions = filters.filterSearch.find(
+                (filterOptions) => filterOptions.title === "Data de Vigência",
+            )!;
+            let datesInRange: boolean[] = [];
+            const filterDates = {
+                initial: dateFilterOptions.selected[0],
+                final: dateFilterOptions.selected[1],
+            };
+            if (filterDates.initial && filterDates.final) {
+                datesInRange.push(value.dataVigenciaInicial >= new Date(filterDates.initial));
+
+                if (value.dataVigenciaFinal) {
+                    datesInRange.push(value.dataVigenciaFinal <= new Date(filterDates.final));
+                } else {
+                    datesInRange.push(false);
+                }
+            } else if (filterDates.initial) {
+                datesInRange.push(value.dataVigenciaInicial === new Date(filterDates.initial));
+            } else if (filterDates.final) {
+                if (value.dataVigenciaFinal) {
+                    datesInRange.push(value.dataVigenciaFinal === new Date(filterDates.final));
+                } else {
+                    datesInRange.push(false);
+                }
+            }
+
+            filtersConditions.push(
+                datesInRange.length === 0 ||
+                    datesInRange.every((dateInRange) => dateInRange),
+            );
+
+            filtersConditions.push(
+                filterFromList(
+                    value.nomeCategoria,
+                    filters.filterSearch.find(
+                        (filterOptions) => filterOptions.title === "Categoria",
+                    )!.selected,
+                ),
+            );
+
+            filtersConditions.push(
+                filterFromList(
+                    value.nomeTipo,
+                    filters.filterSearch.find(
+                        (filterOptions) => filterOptions.title === "Tipo",
+                    )!.selected,
+                ),
+            );
+
+            filtersConditions.push(
+                filterFromList(
+                    value.nomeModalidadeCompra,
+                    filters.filterSearch.find(
+                        (filterOptions) => filterOptions.title === "Modalidade",
+                    )!.selected,
+                ),
+            );
+
+            return filtersConditions.every((filterPassed) => filterPassed);
+        }),
+    );
     const currentPage = $derived(contracts.slice(pageStart, pageEnd));
 
     const dateToday = new Date();
@@ -36,6 +178,19 @@
             y: total,
         })),
     );
+    let lineChartSelected = $state("");
+    $effect(() => {
+        const mqTabletScreen = window.matchMedia("(481px <= width <= 768px)");
+        if (mqTabletScreen.matches) {
+            const dateFilterOptions = filters.filterSearch.find(
+                (filterOption) => filterOption.title === "Data de Vigência",
+            )!;
+            dateFilterOptions.selected[0] = lineChartSelected;
+            if (lineChartSelected) {
+                mainElement.scrollTo({ top: 588 });
+            }
+        }
+    });
 
     const expensesDistribution = $derived(data.expensesDistribution);
     const barChartLabels = $derived(
@@ -106,16 +261,21 @@
 {/if}
 
 <main
+    bind:this={mainElement}
     onscroll={(e) => {
         headerVisible = !((e.target as HTMLElement).scrollTop >= 587);
     }}
 >
     <aside>
-        <LineChart labels={lineChartLabels} values={lineChartValues} />
+        <LineChart
+            labels={lineChartLabels}
+            values={lineChartValues}
+            bind:selected={lineChartSelected}
+        />
         <DistributionChart labels={barChartLabels} values={barChartValues} />
     </aside>
     <section>
-        <ContractsFilter />
+        <ContractsFilter bind:filters />
         <div id="contract-page-selector">
             {#each { length: 10 }, page}
                 {#if page === 0 && pageSelectorOffset}

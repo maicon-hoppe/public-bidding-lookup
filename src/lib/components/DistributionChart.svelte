@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Chart, BarController, BarElement } from "chart.js";
+    import { getRelativePosition } from "chart.js/helpers";
     import { onMount } from "svelte";
 
     const { labels, values }: { labels: string[]; values: number[] } = $props();
@@ -75,6 +76,18 @@
                             color: systemColors.text,
                         },
                     },
+                },
+                interaction: {
+                    mode: "x",
+                    intersect: true,
+                },
+                onClick: (e) => {
+                    const canvasPosition = getRelativePosition(e, chart);
+                    console.log(
+                        chart.scales.x.getLabelForValue(
+                            chart.scales.x.getValueForPixel(canvasPosition.x)!,
+                        ),
+                    );
                 },
                 plugins: {
                     title: {

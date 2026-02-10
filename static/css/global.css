@@ -16,11 +16,11 @@
 	--secondary-color: hsl(332, 38%, 45%);
 	--accent-color: light-dark(hsl(37, 100%, 34%), hsl(37, 100%, 64%));
 
+	--primary-color-20: hsl(286, 61%, 49%);
+
 	--background: light-dark(hsl(0 0 95), hsl(0 0 5));
 	--background-10: light-dark(hsl(0 0 85), hsl(0 0 15));
 	--background-20: light-dark(hsl(0 0 80), hsl(0 0 20));
-
-	--primary-color-20: hsl(286, 61%, 49%);
 
     --heading-size: 2rem;
     --text-size: 1rem;
