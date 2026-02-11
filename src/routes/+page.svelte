@@ -105,18 +105,35 @@
                 final: dateFilterOptions.selected[1],
             };
             if (filterDates.initial && filterDates.final) {
-                datesInRange.push(value.dataVigenciaInicial >= new Date(filterDates.initial));
+                const localeInitialDate = new Date(filterDates.initial);
+                datesInRange.push(
+                    value.dataVigenciaInicial >= localeInitialDate,
+                );
 
+                const localeFinalDate = new Date(filterDates.final);
+                localeFinalDate.setDate(localeFinalDate.getDate() + 1);
                 if (value.dataVigenciaFinal) {
-                    datesInRange.push(value.dataVigenciaFinal <= new Date(filterDates.final));
+                    datesInRange.push(
+                        value.dataVigenciaFinal <= localeFinalDate,
+                    );
                 } else {
                     datesInRange.push(false);
                 }
             } else if (filterDates.initial) {
-                datesInRange.push(value.dataVigenciaInicial === new Date(filterDates.initial));
+                const offsetDate = new Date(value.dataVigenciaInicial);
+                offsetDate.setHours(offsetDate.getHours() - 3);
+                datesInRange.push(
+                    offsetDate.toISOString().substring(0, 10) ===
+                        filterDates.initial,
+                );
             } else if (filterDates.final) {
                 if (value.dataVigenciaFinal) {
-                    datesInRange.push(value.dataVigenciaFinal === new Date(filterDates.final));
+                    const offsetDate = new Date(value.dataVigenciaFinal);
+                    offsetDate.setHours(offsetDate.getHours() - 3);
+                    datesInRange.push(
+                        offsetDate.toISOString().substring(0, 10) ===
+                            filterDates.final,
+                    );
                 } else {
                     datesInRange.push(false);
                 }

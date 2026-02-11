@@ -14,7 +14,7 @@
 
 <h1>Contrato</h1>
 <a href="/{contract_idx + 1}" class="default-button">Próximo</a>
-<a href="/" class="default-buttobh">Voltar</a>
+<a href="/" class="default-button">Voltar</a>
 <hr />
 <MoneyDisplay value={contract ? +contract.valorGlobal : NaN} />
 <dl>
