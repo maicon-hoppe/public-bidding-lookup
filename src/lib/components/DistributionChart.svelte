@@ -3,7 +3,11 @@
     import { getRelativePosition } from "chart.js/helpers";
     import { onMount } from "svelte";
 
-    const { labels, values }: { labels: string[]; values: number[] } = $props();
+    let {
+        labels,
+        values,
+        selected = $bindable(),
+    }: { labels: string[]; values: number[]; selected: number[] } = $props();
 
     Chart.register(BarController, BarElement);
 
@@ -83,17 +87,24 @@
                 },
                 onClick: (e) => {
                     const canvasPosition = getRelativePosition(e, chart);
-                    console.log(
-                        chart.scales.x.getLabelForValue(
-                            chart.scales.x.getValueForPixel(canvasPosition.x)!,
-                        ),
+                    const labelValues = chart.scales.x.getLabelForValue(
+                        chart.scales.x.getValueForPixel(canvasPosition.x)!,
                     );
+
+                    selected = labelValues.split(" à ").map((value) => {
+                        const result = value.substring(3);
+                        if (result.includes("M")) {
+                            return +result.slice(0, -2) * 1e6;
+                        }
+
+                        return +result;
+                    });
                 },
                 plugins: {
                     title: {
                         display: true,
                         color: systemColors.text,
-                        text: "DISTRIBUIÇÃO DE CONTRATOS PÚBLICOS POR DISPESA",
+                        text: "DISTRIBUIÇÃO DE CONTRATOS PÚBLICOS POR DESPESA TOTAL",
                     },
                     legend: { display: false },
                 },

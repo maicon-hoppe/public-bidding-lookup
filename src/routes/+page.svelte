@@ -3,14 +3,25 @@
     import LineChart from "$lib/components/LineChart.svelte";
     import DistributionChart from "$lib/components/DistributionChart.svelte";
     import ContractsFilter from "$lib/components/ContractsFilter.svelte";
-    import { BRLCurrencyFormatter, filterFromList } from "$lib/utils";
     import { fly } from "svelte/transition";
+    import { BRLCurrencyFormatter, filterFromList } from "$lib/utils";
     import type { FilterOptions, TableContract } from "$lib/types";
 
     const { data } = $props();
 
-    let headerVisible = $state(true);
     let mainElement: HTMLElement;
+    let headerVisible = $derived.by(() => {
+        let scrolled = true;
+        if (mainElement) {
+            mainElement.onscroll = (e) => {
+                scrolled =
+                    !((e.target as HTMLElement).scrollTop >= 587) &&
+                    window.matchMedia("(481px <= width <= 768px)").matches;
+            };
+        }
+
+        return scrolled;
+    });
 
     let filters: FilterOptions = $state({
         textSearch: {
@@ -19,6 +30,12 @@
             selected: "Comprador",
         },
         filterSearch: [
+            {
+                title: "Despesa",
+                type: "number",
+                choices: ["Despesa mínima", "Despesa máxima"],
+                selected: [],
+            },
             {
                 title: "Data de Vigência",
                 type: "date",
@@ -93,6 +110,25 @@
             } else if (filters.textSearch.selected === "Unidade Gestora") {
                 filtersConditions.push(
                     value.nomeUnidadeGestora.toUpperCase().includes(filterText),
+                );
+            }
+
+            const expenseFilterOptions = filters.filterSearch.find(
+                (filterOption) => filterOption.title === "Despesa",
+            )!;
+            const filterExpenses = {
+                initial: Number(expenseFilterOptions.selected[0]),
+                final: Number(expenseFilterOptions.selected[1]),
+            };
+
+            if (filterExpenses.initial && filterExpenses.initial >= 0) {
+                filtersConditions.push(
+                    +value.valorGlobal >= filterExpenses.initial,
+                );
+            }
+            if (filterExpenses.final && filterExpenses.final >= 0) {
+                filtersConditions.push(
+                    +value.valorGlobal <= filterExpenses.final,
                 );
             }
 
@@ -175,6 +211,15 @@
         }),
     );
     const currentPage = $derived(contracts.slice(pageStart, pageEnd));
+    const contractPageNumber = $derived(
+        Math.min(contracts.length / 10, 10) < 2
+            ? 0
+            : Math.round(Math.min(contracts.length / 10, 10)),
+    );
+
+    $effect(() => {
+        if (contracts.length > 150) contracts.splice(0, 10);
+    });
 
     const dateToday = new Date();
     const recentExpenses = $derived(
@@ -196,18 +241,6 @@
         })),
     );
     let lineChartSelected = $state("");
-    $effect(() => {
-        const mqTabletScreen = window.matchMedia("(481px <= width <= 768px)");
-        if (mqTabletScreen.matches) {
-            const dateFilterOptions = filters.filterSearch.find(
-                (filterOption) => filterOption.title === "Data de Vigência",
-            )!;
-            dateFilterOptions.selected[0] = lineChartSelected;
-            if (lineChartSelected) {
-                mainElement.scrollTo({ top: 588 });
-            }
-        }
-    });
 
     const expensesDistribution = $derived(data.expensesDistribution);
     const barChartLabels = $derived(
@@ -238,6 +271,26 @@
     const barChartValues = $derived(
         expensesDistribution.map((dataPoint) => dataPoint.quantity),
     );
+    let barChartSelected: number[] = $state([]);
+
+    $effect(() => {
+        const dateFilterOptions = filters.filterSearch.find(
+            (filterOption) => filterOption.title === "Data de Vigência",
+        )!;
+        dateFilterOptions.selected[0] = lineChartSelected;
+
+        const expemseFilterOptions = filters.filterSearch.find(
+            (filterOption) => filterOption.title === "Despesa",
+        )!;
+        expemseFilterOptions.selected = barChartSelected;
+
+        const mqTabletScreen = window.matchMedia("(481px <= width <= 768px)");
+        if (mqTabletScreen.matches) {
+            if (lineChartSelected || barChartSelected.length !== 0) {
+                mainElement.scrollTo({ top: 588 });
+            }
+        }
+    });
 </script>
 
 {#if headerVisible}
@@ -277,24 +330,23 @@
     </header>
 {/if}
 
-<main
-    bind:this={mainElement}
-    onscroll={(e) => {
-        headerVisible = !((e.target as HTMLElement).scrollTop >= 587);
-    }}
->
+<main bind:this={mainElement}>
     <aside>
         <LineChart
             labels={lineChartLabels}
             values={lineChartValues}
             bind:selected={lineChartSelected}
         />
-        <DistributionChart labels={barChartLabels} values={barChartValues} />
+        <DistributionChart
+            labels={barChartLabels}
+            values={barChartValues}
+            bind:selected={barChartSelected}
+        />
     </aside>
     <section>
         <ContractsFilter bind:filters />
         <div id="contract-page-selector">
-            {#each { length: 10 }, page}
+            {#each { length: contractPageNumber }, page}
                 {#if page === 0 && pageSelectorOffset}
                     <button
                         id="previous_page"
@@ -303,6 +355,7 @@
                                 "#contract-page-selector > label:has(input:checked) + label",
                             );
                             pageSelectorOffset--;
+                            contracts.splice(-10);
 
                             if (selectedPage) {
                                 const element =
@@ -332,37 +385,44 @@
                     />
                 </label>
             {/each}
-            <button
-                id="next_page"
-                onclick={async (_) => {
-                    const fetchedPage = await fetch(
-                        `/contracts?quantity=10&offset=${10 * ++pageSelectorOffset}`,
-                    );
-                    // Filtro antes do forEach
-                    (await fetchedPage.json()).forEach(
-                        (newContract: TableContract) =>
-                            contracts.push(newContract),
-                    );
+            {#if contractPageNumber >= 10}
+                <button
+                    id="next_page"
+                    onclick={async (_) => {
+                        const fetchedPage = await fetch(
+                            `/contracts?quantity=10&offset=1${10 * ++pageSelectorOffset}`,
+                        );
+                        // Filtro antes do forEach
+                        (await fetchedPage.json()).forEach(
+                            (newContract: TableContract) =>
+                                contracts.push(newContract),
+                        );
 
-                    const selectedPage = document.querySelector(
-                        "#contract-page-selector > label:has(+label > input:checked)",
-                    );
-                    if (selectedPage) {
-                        const element =
-                            selectedPage.firstElementChild as HTMLInputElement;
-                        element.checked = true;
-                    } else {
-                        pageStart = 0 + 10 * pageSelectorOffset;
-                        pageEnd = 9 + 10 * pageSelectorOffset;
-                    }
-                }}
-            >
-                {">>"}
-            </button>
+                        const selectedPage = document.querySelector(
+                            "#contract-page-selector > label:has(+label > input:checked)",
+                        );
+                        if (selectedPage) {
+                            const element =
+                                selectedPage.firstElementChild as HTMLInputElement;
+                            element.checked = true;
+                        } else {
+                            pageStart = 0 + 10 * pageSelectorOffset;
+                            pageEnd = 9 + 10 * pageSelectorOffset;
+                        }
+                    }}
+                >
+                    {">>"}
+                </button>
+            {/if}
         </div>
-        <div id="contract-list">
+        <div
+            id="contract-list"
+            style:height={contractPageNumber >= 10 ? "91dvh" : "95dvh"}
+        >
             {#each currentPage as contract}
                 <InfoTile {contract} />
+            {:else}
+                <p id="empty-list">Nenhum contrato localmente</p>
             {/each}
         </div>
     </section>
@@ -403,10 +463,12 @@
                 label,
                 #next_page,
                 #previous_page {
-                    width: 10%;
+                    flex: 1 1 10%;
                     padding: 3px;
+
                     cursor: pointer;
                     user-select: none;
+
                     text-align: center;
                     border-bottom: 1px solid var(--text-color);
                 }
@@ -426,6 +488,12 @@
                     border-right: none;
                     background-color: transparent;
                 }
+            }
+
+            #contract-list > #empty-list {
+                width: 80%;
+                margin: 40% auto auto;
+                text-align: center;
             }
         }
     }
@@ -448,6 +516,7 @@
             /* margin: auto; */
 
             aside {
+                flex-flow: row nowrap;
                 height: 90dvh;
                 width: 35dvw;
                 /* min-width: 312px; */
@@ -512,7 +581,7 @@
 
                 & > #contract-list {
                     height: 91dvh;
-                    overflow-y: scroll;
+                    overflow-y: auto;
                 }
             }
         }

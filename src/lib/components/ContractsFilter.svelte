@@ -11,6 +11,14 @@
     let filterButtonChecked = $state(false);
     let filterOptionsMenu: HTMLMenuElement;
 
+    const anyFilterSelected = $derived(
+        filters.filterSearch.some(
+            (filterOption) =>
+                filterOption.selected.length !== 0 &&
+                !filterOption.selected.every((value) => value === ""),
+        ),
+    );
+
     onMount(() => {
         const handleClick = function (event: PointerEvent) {
             if (!filterOptionsMenu.contains(event.target as HTMLElement)) {
@@ -122,7 +130,7 @@
             }}
         />
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
-            {#if filterButtonChecked}
+            {#if filterButtonChecked || anyFilterSelected}
                 <path
                     d="M400-240v-80h160v80H400ZM240-440v-80h480v80H240ZM120-640v-80h720v80H120Z"
                 />
@@ -143,7 +151,33 @@
                 <details>
                     <summary>{option.title}</summary>
                     <ul>
-                        {#if option.type === "date"}
+                        {#if option.type === "number"}
+                            {#each option.choices as choice}
+                                <li>
+                                    <label>
+                                        <span>{choice}:</span>
+                                        <span id="money_label">
+                                            R$
+                                            <input
+                                                type={option.type}
+                                                id={choice
+                                                    .replace(" ", "_")
+                                                    .replace("í", "i")
+                                                    .replace("á", "a")
+                                                    .toLowerCase()}
+                                                bind:value={
+                                                    option.selected[
+                                                        option.choices.indexOf(
+                                                            choice,
+                                                        )
+                                                    ]
+                                                }
+                                            />
+                                        </span>
+                                    </label>
+                                </li>
+                            {/each}
+                        {:else if option.type === "date"}
                             {#each option.choices as choice}
                                 <li>
                                     <label>
@@ -334,7 +368,9 @@
 
                     label:where(
                             :has(input#vigencia_inicial),
-                            :has(input#vigencia_final)
+                            :has(input#vigencia_final),
+                            :has(input#despesa_minima),
+                            :has(input#despesa_maxima)
                         ) {
                         display: flex;
                         flex-flow: row nowrap;
@@ -345,6 +381,7 @@
                         input#vigencia_final {
                             padding: 4px;
                             border: 1px solid var(--background-10);
+                            border-radius: var(--default-bradius);
                             background-color: var(--background-10);
 
                             cursor: pointer;
@@ -352,6 +389,32 @@
                             &:focus-visible {
                                 border: 1px solid var(--text-color);
                                 outline: none;
+                            }
+                        }
+
+                        #money_label {
+                            padding: 4px;
+                            width: 55%;
+                            background-color: var(--background-10);
+                            border: 1px solid var(--background-10);
+                            border-radius: var(--default-bradius);
+
+                            &:focus-within {
+                                border: 1px solid var(--text-color);
+                            }
+
+                            input#despesa_minima,
+                            input#despesa_maxima {
+                                width: 80%;
+                                padding: 0px;
+                                border: none;
+                                border-radius: 0px;
+                                background-color: var(--background-10);
+
+                                &:focus-visible {
+                                    border: none;
+                                    outline: none;
+                                }
                             }
                         }
                     }
@@ -379,7 +442,7 @@
             top: 0px;
 
             & > menu#filter-options {
-                min-width: 311px;
+                width: 311px;
                 top: 105%;
             }
         }

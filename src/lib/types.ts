@@ -82,8 +82,8 @@ export type FilterOptions = {
     },
     filterSearch: {
         title: string,
-        type: "date" | "checkbox",
+        type: "number" | "date" | "checkbox",
         choices: string[],
-        selected: string[]
+        selected: (string | number)[]
     }[]
 };
