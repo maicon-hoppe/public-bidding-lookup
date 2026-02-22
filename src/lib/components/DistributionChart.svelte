@@ -2,6 +2,7 @@
     import { Chart, BarController, BarElement } from "chart.js";
     import { getRelativePosition } from "chart.js/helpers";
     import { onMount } from "svelte";
+    import { MediaQuery } from "svelte/reactivity";
 
     let {
         labels,
@@ -11,18 +12,19 @@
 
     Chart.register(BarController, BarElement);
 
+    const mqTabletScreen = new MediaQuery("(481px <= width <= 768px)");
+    const mqDesktopScreen = new MediaQuery("(769px <= width <= 1440px)");
+    const mqDarkTheme = new MediaQuery("(prefers-color-scheme: dark)");
+
     let chartCanvas: HTMLCanvasElement;
     let chart: Chart<"line" | "bar">;
     onMount(() => {
-        const mqTabletScreen = window.matchMedia("(481px <= width <= 768px)");
-        const mqDesktopScreen = window.matchMedia("(769px <= width <= 1440px)");
-        const mqDarkTheme = window.matchMedia("(prefers-color-scheme: dark)");
         const systemColors = {
             primaryColor: "hsl(286, 61%, 29%)",
-            accent: mqDarkTheme.matches
+            accent: mqDarkTheme.current
                 ? "hsl(37, 100%, 64%)"
                 : "hsl(37, 100%, 34%)",
-            text: mqDarkTheme.matches ? "hsl(0 0 90)" : "hsl(0 0 10)",
+            text: mqDarkTheme.current ? "hsl(0 0 90)" : "hsl(0 0 10)",
         };
 
         chart = new Chart(chartCanvas, {
@@ -111,27 +113,22 @@
             },
         });
 
-        function handler(e: MediaQueryListEvent) {
-            const textColor = e.matches ? "hsl(0 0 90)" : "hsl(0 0 10)";
-            const accentColor = e.matches
-                ? "hsl(37, 100%, 64%)"
-                : "hsl(37, 100%, 34%)";
+        const textColor = mqDarkTheme.current ? "hsl(0 0 90)" : "hsl(0 0 10)";
+        const accentColor = mqDarkTheme.current
+            ? "hsl(37, 100%, 64%)"
+            : "hsl(37, 100%, 34%)";
 
-            chart.options.elements!.line!.borderColor = accentColor;
-            chart.options.elements!.point!.backgroundColor = accentColor;
+        chart.options.elements!.line!.borderColor = accentColor;
+        chart.options.elements!.point!.backgroundColor = accentColor;
 
-            chart.options.scales!.x!.title!.color = textColor;
-            chart.options.scales!.y!.title!.color = textColor;
+        chart.options.scales!.x!.title!.color = textColor;
+        chart.options.scales!.y!.title!.color = textColor;
 
-            chart.options.scales!.x!.ticks!.color = textColor;
-            chart.options.scales!.y!.ticks!.color = textColor;
-            chart.options.scales!.y!.grid!.color = textColor;
+        chart.options.scales!.x!.ticks!.color = textColor;
+        chart.options.scales!.y!.ticks!.color = textColor;
+        chart.options.scales!.y!.grid!.color = textColor;
 
-            chart.options.plugins!.title!.color = textColor;
-
-            chart.update();
-        }
-        mqDarkTheme.addEventListener("change", handler);
+        chart.options.plugins!.title!.color = textColor;
 
         const observerCallback: MutationCallback = function (
             mutationList,
@@ -175,7 +172,6 @@
         });
 
         return function () {
-            mqDarkTheme.removeEventListener("change", handler);
             observer.disconnect();
             chart.destroy();
         };
@@ -188,22 +184,27 @@
 
 <style>
     #chart-box {
-        height: 40dvh;
-        margin: 5px 3px;
-        border: 1px solid var(--text-color);
+        /* border: 1px solid var(--text-color); */
+        border-radius: var(--default-bradius);
         background-color: var(--background-10);
         box-shadow: 1px 2px 2px var(--dark-text-color);
     }
 
     @media (769px <= width <= 1440px) {
         #chart-box {
-            width: 45dvw;
+            height: 80%;
+            min-width: 90%;
+            margin: auto 5%;
+            border: none;
+            scroll-snap-align: center;
         }
     }
 
     @media (481px <= width <= 768px) {
         #chart-box {
-            height: 44dvh;
+            height: 43dvh;
+            width: 95%;
+            margin: 1dvh auto;
         }
     }
 </style>

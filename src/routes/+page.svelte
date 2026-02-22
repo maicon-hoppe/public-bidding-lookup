@@ -1,26 +1,99 @@
 <script lang="ts">
+    import { on } from "svelte/events";
+    import { SvelteDate, MediaQuery } from "svelte/reactivity";
+    import { fly } from "svelte/transition";
     import InfoTile from "$lib/components/InfoTile.svelte";
     import LineChart from "$lib/components/LineChart.svelte";
     import DistributionChart from "$lib/components/DistributionChart.svelte";
     import ContractsFilter from "$lib/components/ContractsFilter.svelte";
-    import { fly } from "svelte/transition";
     import { BRLCurrencyFormatter, filterFromList } from "$lib/utils";
     import type { FilterOptions, TableContract } from "$lib/types";
 
     const { data } = $props();
 
+    const mqDesktopScreen = new MediaQuery("(769px <= width <= 1440px)");
+    const mqTabletScreen = new MediaQuery("(481px <= width <= 768px)");
+
     let mainElement: HTMLElement;
-    let headerVisible = $derived.by(() => {
-        let scrolled = true;
-        if (mainElement) {
-            mainElement.onscroll = (e) => {
-                scrolled =
-                    !((e.target as HTMLElement).scrollTop >= 587) &&
-                    window.matchMedia("(481px <= width <= 768px)").matches;
+    let headerVisible = $state(true);
+    $effect(() => {
+        if (mqTabletScreen.current || mqDesktopScreen.current) {
+            const handler = function (e: Event) {
+                headerVisible = !((e.target as HTMLElement).scrollTop >= 100);
+            };
+            const off = on(mainElement, "scroll", handler);
+
+            return off;
+        }
+    });
+
+    let graphsCarrousel: HTMLDivElement;
+    let carrouselScrollPosition: 0 | 740 = $state(0);
+    $effect(() => {
+        if (mqDesktopScreen.current) {
+            const scrollHandler = function () {
+                carrouselScrollPosition =
+                    graphsCarrousel.scrollLeft >= graphsCarrousel.offsetWidth
+                        ? 740
+                        : 0;
+            };
+
+            let scrollInterval: NodeJS.Timeout;
+            const createInterval = function () {
+                scrollInterval = setInterval(() => {
+                    carrouselScrollPosition =
+                        graphsCarrousel.scrollLeft >=
+                        graphsCarrousel.offsetWidth
+                            ? 0
+                            : 740;
+                }, 10000);
+                graphsCarrousel.scroll({
+                    left: carrouselScrollPosition,
+                    behavior: "smooth",
+                });
+            };
+
+            const destroyInterval = function () {
+                clearInterval(scrollInterval);
+            };
+
+            createInterval();
+            const removeScrollendListener = on(
+                graphsCarrousel,
+                "scrollend",
+                scrollHandler,
+            );
+            const removeMouseleaveListener = on(
+                graphsCarrousel,
+                "mouseleave",
+                createInterval,
+            );
+            const removeMouseenterListener = on(
+                graphsCarrousel,
+                "mouseenter",
+                destroyInterval,
+            );
+
+            return function () {
+                destroyInterval();
+                removeScrollendListener();
+                removeMouseleaveListener();
+                removeMouseenterListener();
             };
         }
+    });
 
-        return scrolled;
+    let pageScrollPosition: 0 | 1 = $state(0);
+    $effect(() => {
+        const handler = function (e: Event) {
+            const scrollTarget = e.target as HTMLElement;
+            pageScrollPosition =
+                scrollTarget.scrollTop >= scrollTarget.offsetHeight / 2 ? 1 : 0;
+        };
+
+        const off = on(mainElement, "scroll", handler);
+
+        return off;
     });
 
     let filters: FilterOptions = $state({
@@ -221,7 +294,7 @@
         if (contracts.length > 150) contracts.splice(0, 10);
     });
 
-    const dateToday = new Date();
+    const dateToday = new SvelteDate();
     const recentExpenses = $derived(
         data.monthlyExpenses.filter(
             (value) =>
@@ -284,8 +357,7 @@
         )!;
         expemseFilterOptions.selected = barChartSelected;
 
-        const mqTabletScreen = window.matchMedia("(481px <= width <= 768px)");
-        if (mqTabletScreen.matches) {
+        if (mqTabletScreen.current) {
             if (lineChartSelected || barChartSelected.length !== 0) {
                 mainElement.scrollTo({ top: 588 });
             }
@@ -332,19 +404,46 @@
 
 <main bind:this={mainElement}>
     <aside>
-        <LineChart
-            labels={lineChartLabels}
-            values={lineChartValues}
-            bind:selected={lineChartSelected}
-        />
-        <DistributionChart
-            labels={barChartLabels}
-            values={barChartValues}
-            bind:selected={barChartSelected}
-        />
+        <div id="graphs" bind:this={graphsCarrousel}>
+            <LineChart
+                labels={lineChartLabels}
+                values={lineChartValues}
+                bind:selected={lineChartSelected}
+            />
+            <DistributionChart
+                labels={barChartLabels}
+                values={barChartValues}
+                bind:selected={barChartSelected}
+            />
+        </div>
+        {#if mqDesktopScreen.current}
+            <div id="aside-scroll-dots">
+                {#each { length: 2 }, scrollPosition}
+                    <label for="aside_scroll_step_{scrollPosition}">
+                        <input
+                            type="radio"
+                            name="scroll-steps"
+                            id="aside_scroll_step_{scrollPosition}"
+                            checked={carrouselScrollPosition ===
+                                740 * scrollPosition}
+                            bind:group={carrouselScrollPosition}
+                            value={740 * scrollPosition}
+                        />
+                    </label>
+                {/each}
+            </div>
+        {/if}
     </aside>
     <section>
-        <ContractsFilter bind:filters />
+        <ContractsFilter
+            bind:filters
+            onfiltermenudisplay={() => {
+                mainElement.style.overflowY = "hidden";
+            }}
+            onfiltermenuhide={() => {
+                mainElement.style.overflowY = "auto";
+            }}
+        />
         <div id="contract-page-selector">
             {#each { length: contractPageNumber }, page}
                 {#if page === 0 && pageSelectorOffset}
@@ -426,15 +525,59 @@
             {/each}
         </div>
     </section>
+    <div id="body-scroll-dots">
+        {#each { length: 2 }, scrollPosition}
+            <label for="page_scroll_step_{scrollPosition}">
+                {#if pageScrollPosition === scrollPosition}
+                    <svg
+                        viewBox="0 -960 960 960"
+                        version="1.1"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <rect
+                            width="160"
+                            height="3096.7742"
+                            x="400"
+                            y="-2000.38708"
+                            ry="269.1402"
+                        />
+                    </svg>
+                {:else}
+                    <svg
+                        viewBox="0 -960 960 960"
+                        version="1.1"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path
+                            d="M 352.875,-352.875 C 317.625,-388.125 300,-430.5 300,-480 c 0,-49.5 17.625,-91.875 52.875,-127.125 C 388.125,-642.375 430.5,-660 480,-660 c 49.5,0 91.875,17.625 127.125,52.875 35.25,35.25 52.875,77.625 52.875,127.125 0,49.5 -17.625,91.875 -52.875,127.125 C 571.875,-317.625 529.5,-300 480,-300 c -49.5,0 -91.875,-17.625 -127.125,-52.875 z"
+                        />
+                    </svg>
+                {/if}
+                <input
+                    type="radio"
+                    name="page_scroll_steps"
+                    id="page_scroll_step_{scrollPosition}"
+                    checked={pageScrollPosition === scrollPosition}
+                    bind:group={pageScrollPosition}
+                    value={scrollPosition}
+                />
+            </label>
+        {/each}
+    </div>
 </main>
 
 <style>
     header {
         display: flex;
-        flex-direction: row;
+        flex-flow: row wrap;
         align-items: center;
         justify-content: space-between;
         height: 9dvh;
+        width: 100%;
+
+        position: fixed;
+
+        background-color: var(--background);
         box-shadow: 0px 1px 1px var(--text-color);
 
         button {
@@ -444,10 +587,17 @@
 
     main {
         display: flex;
-        height: 91dvh;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
 
         & > aside {
-            display: flex;
+            background-color: var(--primary-color);
+
+            #graphs {
+                display: flex;
+            }
         }
 
         & > section {
@@ -458,6 +608,7 @@
                 display: flex;
                 flex-flow: row nowrap;
                 justify-content: space-evenly;
+                padding-top: 3px;
                 background-color: var(--background);
 
                 label,
@@ -496,6 +647,23 @@
                 text-align: center;
             }
         }
+
+        & > #body-scroll-dots {
+            display: flex;
+            flex-flow: column nowrap;
+            position: fixed;
+            top: 50dvh;
+            right: 0dvw;
+
+            svg {
+                width: 20px;
+
+                &:has(+ input:checked) {
+                    height: 80px;
+                    stroke-width: 115.917;
+                }
+            }
+        }
     }
 
     input[type="radio"] {
@@ -512,27 +680,69 @@
     @media (769px <= width <= 1440px) {
         main {
             flex-flow: column nowrap;
-            /* height: 90dvh; */
-            /* margin: auto; */
+            height: 100dvh;
+            overflow-y: auto;
+            scroll-snap-type: y proximity;
 
             aside {
-                flex-flow: row nowrap;
-                height: 90dvh;
-                width: 35dvw;
-                /* min-width: 312px; */
+                min-height: 80dvh;
+                width: 100%;
+                margin: 14.5dvh auto 5.5dvh;
+
+                scroll-snap-align: end;
+
+                #graphs {
+                    flex-flow: row nowrap;
+                    height: 95%;
+
+                    overflow-x: auto;
+                    scroll-snap-type: x mandatory;
+
+                    &::-webkit-scrollbar {
+                        display: none;
+                    }
+                }
+
+                #aside-scroll-dots {
+                    display: inline;
+                    height: 5%;
+
+                    position: relative;
+                    left: 50dvw;
+
+                    color: var(--light-text-color);
+
+                    label:has(input:checked)::after {
+                        content: "●";
+                    }
+
+                    label:not(:has(input:checked))::after {
+                        content: "○";
+                    }
+                }
             }
 
             section {
-                height: inherit;
-                /* height: 90dvh; */
-                min-height: 363px;
-                width: 65dvw;
+                height: 100dvh;
+                /* min-height: 91dvh; */
+                /* width: 90dvw; */
+                scroll-snap-align: start;
 
                 #contract-list {
-                    /* height: 83.2dvh; */
-                    /* min-height: 0px; */
-                    max-height: calc(100% - 43px);
+                    /* height: 91dvh; */
+                    max-height: 90.7%;
+                    /* max-height: calc(100% - 60px); */
+                    /* width: 90dvw; */
+                    padding: 0dvw 5dvw;
+                    margin: auto;
+                    margin-right: 20px;
+
                     overflow: auto;
+
+                    /* &::-webkit-scrollbar { */
+                    /* display: none; */
+                    /* } */
+
                     /* height: calc(100% - 33px); */
                     /* height: 536.63px; */
                     /* scrollbar-gutter: stable; */
@@ -542,12 +752,6 @@
     }
 
     @media (481px <= width <= 768px) {
-        header {
-            width: 100%;
-            position: fixed;
-            background-color: var(--background);
-        }
-
         main {
             height: 100dvh;
             flex-flow: column nowrap;
@@ -560,9 +764,12 @@
             }
 
             aside {
-                padding-top: 9dvh;
-                flex-flow: column nowrap;
+                padding: 9.5dvh 0px 0.5dvh;
                 scroll-snap-align: end;
+
+                #graphs {
+                    flex-flow: column nowrap;
+                }
             }
 
             section {
@@ -570,7 +777,6 @@
 
                 & > #contract-page-selector {
                     width: 100%;
-                    padding-top: 3px;
                     position: sticky;
                     top: 32px;
 

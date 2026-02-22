@@ -1,8 +1,8 @@
 @charset "utf-8";
 
 /*  Color Scheme (light-dark)   */
-/* Primary:   #220A29 - #621D77 */
-/* Secondary: #351825 - #9E4770 */
+/* Primary:        #621D77      */
+/* Secondary:      #9E4770      */
 /* Accent:    #AD6B00 - #FFBA49 */
 
 :root {
@@ -42,7 +42,7 @@
 }
 
 body {
-    height: 100svh;
+    /* height: 100svh; */
     /* width: 100svw; */
 
 	font: var(--text-size) Arial, Helvetica, sans-serif;

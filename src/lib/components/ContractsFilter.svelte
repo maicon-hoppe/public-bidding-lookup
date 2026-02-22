@@ -1,8 +1,17 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { on } from "svelte/events";
     import type { FilterOptions } from "$lib/types";
 
-    const { filters = $bindable() }: { filters: FilterOptions } = $props();
+    const {
+        filters = $bindable(),
+        onfiltermenudisplay,
+        onfiltermenuhide,
+    }: {
+        filters: FilterOptions;
+        onfiltermenudisplay: () => void;
+        onfiltermenuhide: () => void;
+    } = $props();
 
     let searchConfigButtonChecked = $state(true);
     let searchConfigMenu: HTMLMenuElement;
@@ -20,15 +29,38 @@
     );
 
     onMount(() => {
+        const resizeFilterOptionsMenu = function () {
+            const filterMenuButtonDimensions =
+                filterMenuButton.getBoundingClientRect();
+            if (
+                filterOptionsMenu.offsetHeight <
+                window.innerHeight - filterMenuButtonDimensions.bottom
+            ) {
+                filterOptionsMenu.style.maxHeight = `${window.innerHeight - filterMenuButtonDimensions.bottom}px`;
+                filterOptionsMenu.style.top = `${filterMenuButtonDimensions.bottom}px`;
+                filterOptionsMenu.style.bottom = "auto";
+            } else {
+                filterOptionsMenu.style.maxHeight = `${filterMenuButtonDimensions.bottom}px`;
+                filterOptionsMenu.style.top = "auto";
+                filterOptionsMenu.style.bottom = `${window.innerHeight - filterMenuButtonDimensions.top}px`;
+            }
+        };
+
         const handleClick = function (event: PointerEvent) {
             if (!filterOptionsMenu.contains(event.target as HTMLElement)) {
                 if (filterMenuButton.contains(event.target as HTMLElement)) {
-                    filterOptionsMenu.style.display = filterButtonChecked
-                        ? "none"
-                        : "flex";
+                    if (filterButtonChecked) {
+                        filterOptionsMenu.style.display = "none";
+                        onfiltermenuhide();
+                    } else {
+                        filterOptionsMenu.style.display = "flex";
+                        onfiltermenudisplay();
+                        resizeFilterOptionsMenu();
+                    }
                 } else {
                     filterButtonChecked = false;
                     filterOptionsMenu.style.display = "none";
+                    onfiltermenuhide();
                 }
             }
         };
@@ -37,15 +69,24 @@
             if (event.key === "Escape") {
                 filterButtonChecked = false;
                 filterOptionsMenu.style.display = "none";
+                onfiltermenuhide();
             }
         };
 
-        document.body.addEventListener("click", handleClick);
-        document.body.addEventListener("keydown", handleKey);
+        const removeClickEventListener = on(
+            document.body,
+            "click",
+            handleClick,
+        );
+        const removeKeyDownEventListener = on(
+            document.body,
+            "keydown",
+            handleKey,
+        );
 
         return () => {
-            document.body.removeEventListener("click", handleClick);
-            document.body.removeEventListener("keydown", handleKey);
+            removeClickEventListener();
+            removeKeyDownEventListener();
         };
     });
 </script>
@@ -337,6 +378,7 @@
             display: none;
             flex-flow: column nowrap;
             align-items: stretch;
+            width: 311px;
 
             position: absolute;
             right: 0%;
@@ -346,6 +388,7 @@
             background-color: var(--background-20);
 
             list-style: inside none;
+            overflow-y: auto;
 
             input[type="checkbox"] {
                 display: inline-block;
@@ -429,11 +472,11 @@
         fill: var(--text-color);
     }
 
-    @media (769px <= width <= 1440px) {
-        search > menu#filter-options {
-            top: 14%;
-        }
-    }
+    /* @media (769px <= width <= 1440px) { */
+    /* search > menu#filter-options { */
+    /* top: 50%; */
+    /* } */
+    /* } */
 
     @media (481px <= width <= 768px) {
         search {
@@ -442,7 +485,6 @@
             top: 0px;
 
             & > menu#filter-options {
-                width: 311px;
                 top: 105%;
             }
         }
