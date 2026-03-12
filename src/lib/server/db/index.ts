@@ -11,13 +11,11 @@ const client = postgres(env.DATABASE_URL);
 
 export const db = drizzle(client, { schema });
 
-export async function getDBExpensesDistribution(parts: number)
-{
-    if (parts <= 1)
-    {
+export async function getDBExpensesDistribution(parts: number) {
+    if (parts <= 1) {
         return await (db
             .select({
-                quantity: sql<number>`count(*)`.mapWith(Number),
+                quantity: sql`count(*)`.mapWith(Number),
                 part: sql<string>`FORMAT('0.00 -| %s', MAX(${schema.contractsTable.valorGlobal}))`.as("maior_valor")
             })
             .from(schema.contractsTable)
@@ -26,7 +24,9 @@ export async function getDBExpensesDistribution(parts: number)
 
     const upperLimit = db.$with("limite_superior").as(db
         .select({
-            maior_valor: sql<number>`MAX(${schema.contractsTable.valorGlobal})`.as('maior_valor')
+            maior_valor: sql`MAX(${schema.contractsTable.valorGlobal})`
+                .mapWith(Number)
+                .as('maior_valor')
         })
         .from(schema.contractsTable)
     );
@@ -35,12 +35,15 @@ export async function getDBExpensesDistribution(parts: number)
         quantity: number;
         part: string;
     }[] = [];
-    for (let index = 1; index <= parts; index++)
-    {
+    for (let index = 1; index <= parts; index++) {
         const valueInterval = db.$with("intervalo").as(db
             .select({
-                inicio: sql<number>`(maior_valor * ${index - 1}/${parts})::NUMERIC(11,2)`.as('inicio'),
-                fim: sql<number>`(maior_valor * ${index}/${parts})::NUMERIC(11,2)`.as('fim')
+                inicio: sql`(maior_valor * ${index - 1}/${parts})::NUMERIC(11,2)`
+                    .mapWith(Number)
+                    .as('inicio'),
+                fim: sql`(maior_valor * ${index}/${parts})::NUMERIC(11,2)`
+                    .mapWith(Number)
+                    .as('fim')
             })
             .from(upperLimit)
         );
@@ -48,7 +51,7 @@ export async function getDBExpensesDistribution(parts: number)
         const fraction = await db.with(upperLimit, valueInterval)
             .select({
                 quantity: count(schema.contractsTable.valorGlobal),
-                part: sql<string>`FORMAT('%s à %s', i.inicio, i.fim)`.as('parte')
+                part: sql`FORMAT('%s à %s', i.inicio, i.fim)`.mapWith(String).as('parte')
             })
             .from(sql`intervalo AS i`)
             .leftJoin(
@@ -65,8 +68,7 @@ export async function getDBExpensesDistribution(parts: number)
     return partList;
 }
 
-export async function getDBMonthlyCurrentExpenses()
-{
+export async function getDBMonthlyCurrentExpenses() {
     const finalDate = db.$with("data_final").as(db
         .select({
             maior_data: sql<Date>`MAX(${schema.contractsTable.dataVigenciaInicial})`.as('maior_data')
@@ -91,34 +93,31 @@ export async function getDBMonthlyCurrentExpenses()
     )
 }
 
-export async function getDBContractData(id: number)
-{
+export async function getDBContractData(id: number) {
     let contract_list;
     if (id === 0) { id = 1 }
-    if (id > 0)
-    {
+    if (id > 0) {
         contract_list = await (db
             .select()
             .from(schema.contractsTable)
             .where(eq(schema.contractsTable.id, id))
         ) as TableContract[]
     }
-    else if (id < 0)
-    {
+    else if (id < 0) {
         contract_list = await (db
             .select()
             .from(schema.contractsTable)
             .orderBy(desc(schema.contractsTable.id))
             .where(eq(
-                    schema.contractsTable.id, 
-                    sql<number>`
+                schema.contractsTable.id,
+                sql<number>`
                     (
                         SELECT ${schema.contractsTable.id}
                         FROM ${schema.contractsTable}
                         ORDER BY ${schema.contractsTable.id} DESC
                         LIMIT 1
                     ) + (${id} + 1)`
-                )
+            )
             )
         ) as TableContract[]
     }
@@ -126,34 +125,30 @@ export async function getDBContractData(id: number)
     return contract_list ? contract_list[0] : null;
 }
 
-export async function getDBContracts(quantity?: number, offset?: number)
-{
-    if (quantity && offset)
-    {
+export async function getDBContracts(quantity?: number, offset?: number) {
+    if (quantity && offset) {
         return await (db
             .select()
             .from(schema.contractsTable)
             .orderBy(desc(schema.contractsTable.dataVigenciaInicial),
-                     schema.contractsTable.id)
+                schema.contractsTable.id)
             .limit(quantity)
             .offset(offset)) as TableContract[];
     }
-    else if (quantity)
-    {
+    else if (quantity) {
         return await (db
             .select()
             .from(schema.contractsTable)
             .orderBy(desc(schema.contractsTable.dataVigenciaInicial),
-                     schema.contractsTable.id)
+                schema.contractsTable.id)
             .limit(quantity)) as TableContract[];
     }
-    else if (offset)
-    {
+    else if (offset) {
         return await (db
             .select()
             .from(schema.contractsTable)
             .orderBy(desc(schema.contractsTable.dataVigenciaInicial),
-                     schema.contractsTable.id)
+                schema.contractsTable.id)
             .offset(offset)) as TableContract[];
     }
 
@@ -161,12 +156,11 @@ export async function getDBContracts(quantity?: number, offset?: number)
         .select()
         .from(schema.contractsTable)
         .orderBy(desc(schema.contractsTable.dataVigenciaInicial),
-                 schema.contractsTable.id)
+            schema.contractsTable.id)
     ) as TableContract[];
 }
 
-export async function insertDBContracts(contracts: TableContract[])
-{
+export async function insertDBContracts(contracts: TableContract[]) {
     return await db
         .insert(schema.contractsTable)
         .values(contracts)

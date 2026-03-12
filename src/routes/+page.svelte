@@ -1,39 +1,38 @@
 <script lang="ts">
     import { on } from "svelte/events";
-    import { SvelteDate, MediaQuery } from "svelte/reactivity";
+    import { MediaQuery } from "svelte/reactivity";
     import { fly } from "svelte/transition";
-    import InfoTile from "$lib/components/InfoTile.svelte";
     import LineChart from "$lib/components/LineChart.svelte";
     import DistributionChart from "$lib/components/DistributionChart.svelte";
-    import ContractsFilter from "$lib/components/ContractsFilter.svelte";
-    import { BRLCurrencyFormatter, filterFromList } from "$lib/utils";
-    import type { FilterOptions, TableContract } from "$lib/types";
 
     const { data } = $props();
 
     const mqDesktopScreen = new MediaQuery("(769px <= width <= 1440px)");
     const mqTabletScreen = new MediaQuery("(481px <= width <= 768px)");
 
-    let mainElement: HTMLElement;
     let headerVisible = $state(true);
+    let mainElement: HTMLElement;
     $effect(() => {
         if (mqTabletScreen.current || mqDesktopScreen.current) {
             const handler = function (e: Event) {
-                headerVisible = !((e.target as HTMLElement).scrollTop >= 100);
+                const scrollTarget = e.target as HTMLElement;
+                headerVisible = !(scrollTarget.scrollTop >= 100);
             };
             const off = on(mainElement, "scroll", handler);
+
+            mainElement.style.height = headerVisible ? "91dvh" : "100dvh";
 
             return off;
         }
     });
 
-    let graphsCarrousel: HTMLDivElement;
+    let graphsCarrousel = $state<HTMLDivElement>();
     let carrouselScrollPosition: 0 | 740 = $state(0);
     $effect(() => {
-        if (mqDesktopScreen.current) {
+        if (mqDesktopScreen.current && graphsCarrousel) {
             const scrollHandler = function () {
                 carrouselScrollPosition =
-                    graphsCarrousel.scrollLeft >= graphsCarrousel.offsetWidth
+                    graphsCarrousel!.scrollLeft >= graphsCarrousel!.offsetWidth
                         ? 740
                         : 0;
             };
@@ -42,12 +41,12 @@
             const createInterval = function () {
                 scrollInterval = setInterval(() => {
                     carrouselScrollPosition =
-                        graphsCarrousel.scrollLeft >=
-                        graphsCarrousel.offsetWidth
+                        graphsCarrousel!.scrollLeft >=
+                        graphsCarrousel!.offsetWidth
                             ? 0
                             : 740;
                 }, 10000);
-                graphsCarrousel.scroll({
+                graphsCarrousel!.scroll({
                     left: carrouselScrollPosition,
                     behavior: "smooth",
                 });
@@ -83,218 +82,7 @@
         }
     });
 
-    let pageScrollPosition: 0 | 1 = $state(0);
-    $effect(() => {
-        const handler = function (e: Event) {
-            const scrollTarget = e.target as HTMLElement;
-            pageScrollPosition =
-                scrollTarget.scrollTop >= scrollTarget.offsetHeight / 2 ? 1 : 0;
-        };
-
-        const off = on(mainElement, "scroll", handler);
-
-        return off;
-    });
-
-    let filters: FilterOptions = $state({
-        textSearch: {
-            text: "",
-            textOptions: ["Comprador", "Fornecedor", "Unidade Gestora"],
-            selected: "Comprador",
-        },
-        filterSearch: [
-            {
-                title: "Despesa",
-                type: "number",
-                choices: ["Despesa mínima", "Despesa máxima"],
-                selected: [],
-            },
-            {
-                title: "Data de Vigência",
-                type: "date",
-                choices: ["Vigência inicial", "Vigência final"],
-                selected: ["", ""],
-            },
-            {
-                title: "Categoria",
-                type: "checkbox",
-                choices: [
-                    "Compras",
-                    "Serviços",
-                    "Serviços de Engenharia",
-                    "Serviços de Saúde",
-                    "Obras",
-                    "Mão de Obra",
-                    "Informática (TIC)",
-                ],
-                selected: [],
-            },
-            {
-                title: "Tipo",
-                type: "checkbox",
-                choices: [
-                    "Contrato",
-                    "Termo de Adesão",
-                    "Acordo de Cooperação Técnica (ACT)",
-                    "Credenciamento",
-                    "Concessão",
-                    "Empenho",
-                    "Outros",
-                ],
-                selected: [],
-            },
-            {
-                title: "Modalidade",
-                type: "checkbox",
-                choices: [
-                    "Pregão",
-                    "Concorrência",
-                    "Inexigibilidade",
-                    "Dispensa",
-                    "Não se aplica",
-                ],
-                selected: [],
-            },
-        ],
-    });
-
-    let pageStart = $state(0);
-    let pageEnd = $state(9);
-    let pageSelectorOffset = $state(0);
-    const contracts = $derived(
-        data.contracts.filter((value) => {
-            let filtersConditions: boolean[] = [];
-
-            const filterText = filters.textSearch.text.toUpperCase();
-            if (filters.textSearch.selected === "Comprador") {
-                filtersConditions.push(
-                    value.nomeUnidadeRealizadoraCompra
-                        .toUpperCase()
-                        .includes(filterText),
-                );
-            } else if (filters.textSearch.selected === "Fornecedor") {
-                filtersConditions.push(
-                    value.nomeRazaoSocialFornecedor
-                        ? value.nomeRazaoSocialFornecedor
-                              .toUpperCase()
-                              .includes(filterText)
-                        : false,
-                );
-            } else if (filters.textSearch.selected === "Unidade Gestora") {
-                filtersConditions.push(
-                    value.nomeUnidadeGestora.toUpperCase().includes(filterText),
-                );
-            }
-
-            const expenseFilterOptions = filters.filterSearch.find(
-                (filterOption) => filterOption.title === "Despesa",
-            )!;
-            const filterExpenses = {
-                initial: Number(expenseFilterOptions.selected[0]),
-                final: Number(expenseFilterOptions.selected[1]),
-            };
-
-            if (filterExpenses.initial && filterExpenses.initial >= 0) {
-                filtersConditions.push(
-                    +value.valorGlobal >= filterExpenses.initial,
-                );
-            }
-            if (filterExpenses.final && filterExpenses.final >= 0) {
-                filtersConditions.push(
-                    +value.valorGlobal <= filterExpenses.final,
-                );
-            }
-
-            const dateFilterOptions = filters.filterSearch.find(
-                (filterOptions) => filterOptions.title === "Data de Vigência",
-            )!;
-            let datesInRange: boolean[] = [];
-            const filterDates = {
-                initial: dateFilterOptions.selected[0],
-                final: dateFilterOptions.selected[1],
-            };
-            if (filterDates.initial && filterDates.final) {
-                const localeInitialDate = new Date(filterDates.initial);
-                datesInRange.push(
-                    value.dataVigenciaInicial >= localeInitialDate,
-                );
-
-                const localeFinalDate = new Date(filterDates.final);
-                localeFinalDate.setDate(localeFinalDate.getDate() + 1);
-                if (value.dataVigenciaFinal) {
-                    datesInRange.push(
-                        value.dataVigenciaFinal <= localeFinalDate,
-                    );
-                } else {
-                    datesInRange.push(false);
-                }
-            } else if (filterDates.initial) {
-                const offsetDate = new Date(value.dataVigenciaInicial);
-                offsetDate.setHours(offsetDate.getHours() - 3);
-                datesInRange.push(
-                    offsetDate.toISOString().substring(0, 10) ===
-                        filterDates.initial,
-                );
-            } else if (filterDates.final) {
-                if (value.dataVigenciaFinal) {
-                    const offsetDate = new Date(value.dataVigenciaFinal);
-                    offsetDate.setHours(offsetDate.getHours() - 3);
-                    datesInRange.push(
-                        offsetDate.toISOString().substring(0, 10) ===
-                            filterDates.final,
-                    );
-                } else {
-                    datesInRange.push(false);
-                }
-            }
-
-            filtersConditions.push(
-                datesInRange.length === 0 ||
-                    datesInRange.every((dateInRange) => dateInRange),
-            );
-
-            filtersConditions.push(
-                filterFromList(
-                    value.nomeCategoria,
-                    filters.filterSearch.find(
-                        (filterOptions) => filterOptions.title === "Categoria",
-                    )!.selected,
-                ),
-            );
-
-            filtersConditions.push(
-                filterFromList(
-                    value.nomeTipo,
-                    filters.filterSearch.find(
-                        (filterOptions) => filterOptions.title === "Tipo",
-                    )!.selected,
-                ),
-            );
-
-            filtersConditions.push(
-                filterFromList(
-                    value.nomeModalidadeCompra,
-                    filters.filterSearch.find(
-                        (filterOptions) => filterOptions.title === "Modalidade",
-                    )!.selected,
-                ),
-            );
-
-            return filtersConditions.every((filterPassed) => filterPassed);
-        }),
-    );
-    const currentPage = $derived(contracts.slice(pageStart, pageEnd));
-    const contractPageNumber = $derived(
-        Math.min(contracts.length / 10, 10) < 2
-            ? 0
-            : Math.round(Math.min(contracts.length / 10, 10)),
-    );
-
-    $effect(() => {
-        if (contracts.length > 150) contracts.splice(0, 10);
-    });
-
-    const dateToday = new SvelteDate();
+    const dateToday = new Date();
     const recentExpenses = $derived(
         data.monthlyExpenses.filter(
             (value) =>
@@ -313,107 +101,122 @@
             y: total,
         })),
     );
-    let lineChartSelected = $state("");
 
     const expensesDistribution = $derived(data.expensesDistribution);
     const barChartLabels = $derived(
-        expensesDistribution.map((dataPoint) => {
-            const formatted: string[] = [];
-            const interval_string = dataPoint.part.split(" ");
-            const lowerLimit = BRLCurrencyFormatter.formatToParts(
-                +interval_string[0],
-            )
-                .slice(0, 3)
-                .map(({ type, value }) => value)
-                .join("");
-
-            formatted.push(
-                +interval_string[0] === 0 ? lowerLimit : lowerLimit + " M",
-            );
-            formatted.push(interval_string[1]);
-            formatted.push(
-                BRLCurrencyFormatter.formatToParts(+interval_string[2])
-                    .slice(0, 3)
-                    .map(({ type, value }) => value)
-                    .join("") + " M",
-            );
-
-            return formatted.join(" ");
-        }),
+        expensesDistribution.map((dataPoint) => dataPoint.part),
     );
     const barChartValues = $derived(
         expensesDistribution.map((dataPoint) => dataPoint.quantity),
     );
-    let barChartSelected: number[] = $state([]);
-
-    $effect(() => {
-        const dateFilterOptions = filters.filterSearch.find(
-            (filterOption) => filterOption.title === "Data de Vigência",
-        )!;
-        dateFilterOptions.selected[0] = lineChartSelected;
-
-        const expemseFilterOptions = filters.filterSearch.find(
-            (filterOption) => filterOption.title === "Despesa",
-        )!;
-        expemseFilterOptions.selected = barChartSelected;
-
-        if (mqTabletScreen.current) {
-            if (lineChartSelected || barChartSelected.length !== 0) {
-                mainElement.scrollTo({ top: 588 });
-            }
-        }
-    });
 </script>
 
 {#if headerVisible}
-    <header transition:fly={{ y: "-9dvh", delay: 200, duration: 200 }}>
-        <h1>Contratos</h1>
-        <button
-            aria-label="Switch Theme"
-            class="default-button"
-            onclick={() => {
-                const isDarkTheme = window.matchMedia(
-                    "(prefers-color-scheme: dark)",
-                ).matches;
-                const isDarkThemeSelected =
-                    document.body.classList.contains("dark-theme");
-                if (isDarkTheme || isDarkThemeSelected) {
-                    document.body.classList.toggle("light-theme");
-                    document.body.classList.remove("dark-theme");
-                } else {
-                    document.body.classList.toggle("dark-theme");
-                }
-            }}
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M12 2v2" /><path
-                    d="M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715"
-                /><path d="M16 12a4 4 0 0 0-4-4" /><path
-                    d="m19 5-1.256 1.256"
-                /><path d="M20 12h2" />
-            </svg>
+    <header in:fly={{ y: "-9dvh", duration: 200 }}>
+        <button>
+            <h1>
+                <svg
+                    viewBox="0 -960 960 960"
+                    version="1.1"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <path
+                        d="m 240,-880 c -22,0 -40.81771,7.84896 -56.48438,23.51562 C 167.84896,-840.81771 160,-822 160,-800 v 640 c 0,22 7.84896,40.81771 23.51562,56.48438 C 199.18229,-87.848958 218,-80 240,-80 h 480 c 22,0 40.81771,-7.848958 56.48438,-23.51562 C 792.15104,-119.18229 800,-138 800,-160 V -640 L 560,-880 Z m 0,80 h 280 v 200 h 200 v 440 H 240 v -440 z"
+                    />
+                    <path
+                        d="m 464.8017,-578.8553 -64.5824,-64.5824 q -7.2312,4.987 -16.8314,7.9793 -9.6,2.9922 -20.8209,2.9922 -29.4237,0 -49.9954,-20.5716 Q 292,-673.6094 292,-703.0331 q 0,-29.4237 20.5716,-49.9953 20.5717,-20.5716 49.9954,-20.5716 29.4237,0 49.9953,20.5716 20.5716,20.5716 20.5716,49.9953 0,11.4703 -2.9922,20.821 -2.9923,9.3507 -7.9794,16.3326 l 64.8319,65.0812 z M 362.567,-663.8847 q 16.4573,0 27.8028,-11.3456 11.3456,-11.3455 11.3456,-27.8028 0,-16.4573 -11.3456,-27.8029 -11.3455,-11.3455 -27.8028,-11.3455 -16.4573,0 -27.8029,11.3455 -11.3455,11.3456 -11.3455,27.8029 0,16.4573 11.3455,27.8028 11.3456,11.3456 27.8029,11.3456 z"
+                        style="stroke-width:0.249352"
+                    />
+                    <g
+                        transform="matrix(0.94877213,0,0,0.94877213,-205.27245,-229.01133)"
+                    >
+                        <ellipse
+                            style="fill-opacity:1;stroke-width:23.7131;stroke-dasharray:none"
+                            cx="720.86206"
+                            cy="-158.93512"
+                            rx="29.005501"
+                            ry="29.208336"
+                        />
+                        <rect
+                            style="fill:none;fill-opacity:1;stroke-width:66.4108;stroke-dasharray:none"
+                            width="212.63577"
+                            height="212.06143"
+                            x="468.04919"
+                            y="176.31326"
+                            ry="0"
+                            rx="0"
+                            transform="matrix(0.84250702,-0.53868537,0.8390338,0.54407929,0,0)"
+                        />
+                    </g>
+                </svg>
+                Despesas Públicas
+            </h1>
         </button>
+        <div>
+            <nav data-sveltekit-reload>
+                <a href="/">Home</a>
+                <a href="/contratos">Contratos</a>
+            </nav>
+            <button
+                aria-label="Switch Theme"
+                id="switch-theme-button"
+                onclick={() => {
+                    const isDarkTheme = window.matchMedia(
+                        "(prefers-color-scheme: dark)",
+                    ).matches;
+                    const isDarkThemeSelected =
+                        document.body.classList.contains("dark-theme");
+                    if (isDarkTheme || isDarkThemeSelected) {
+                        document.body.classList.toggle("light-theme");
+                        document.body.classList.remove("dark-theme");
+                    } else {
+                        document.body.classList.toggle("dark-theme");
+                    }
+                }}
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M12 2v2" />
+                    <path
+                        d="M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715"
+                    />
+                    <path d="M16 12a4 4 0 0 0-4-4" />
+                    <path d="m19 5-1.256 1.256" />
+                    <path d="M20 12h2" />
+                </svg>
+            </button>
+        </div>
     </header>
 {/if}
 
 <main bind:this={mainElement}>
-    <aside>
+    <section id="intro">
+        <h2>Licitações</h2>
+        <p>
+            <dfn>Licitação</dfn> é o processo por meio do qual a Administração
+            Pública contrata
+            <strong>obras</strong>, <strong>serviços</strong>,
+            <strong>compras</strong>
+            e <strong>alienações</strong>. Em outras palavras, licitação é a
+            forma como a Administração Pública pode comprar e vender.
+        </p>
+        <p>
+            O governo forma um <dfn>contrato</dfn> como um acordo legal para a formação
+            de vínculo e a estipulação de obrigações recíprocas.
+        </p>
+        <a href="/contratos" class="default-button big">Contratos</a>
+    </section>
+    <section id="graphs-carousel">
         <div id="graphs" bind:this={graphsCarrousel}>
-            <LineChart
-                labels={lineChartLabels}
-                values={lineChartValues}
-                bind:selected={lineChartSelected}
-            />
+            <LineChart labels={lineChartLabels} values={lineChartValues} />
             <DistributionChart
                 labels={barChartLabels}
                 values={barChartValues}
-                bind:selected={barChartSelected}
             />
         </div>
         {#if mqDesktopScreen.current}
@@ -433,137 +236,7 @@
                 {/each}
             </div>
         {/if}
-    </aside>
-    <section>
-        <ContractsFilter
-            bind:filters
-            onfiltermenudisplay={() => {
-                mainElement.style.overflowY = "hidden";
-            }}
-            onfiltermenuhide={() => {
-                mainElement.style.overflowY = "auto";
-            }}
-        />
-        <div id="contract-page-selector">
-            {#each { length: contractPageNumber }, page}
-                {#if page === 0 && pageSelectorOffset}
-                    <button
-                        id="previous_page"
-                        onclick={(_) => {
-                            const selectedPage = document.querySelector(
-                                "#contract-page-selector > label:has(input:checked) + label",
-                            );
-                            pageSelectorOffset--;
-                            contracts.splice(-10);
-
-                            if (selectedPage) {
-                                const element =
-                                    selectedPage.firstElementChild as HTMLInputElement;
-                                element.checked = true;
-                            } else {
-                                pageStart = 0 + 10 * 9;
-                                pageEnd = 9 + 10 * 9;
-                            }
-                        }}
-                    >
-                        {"<<"}
-                    </button>
-                {/if}
-                <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-                <label for="page{page + 1}" tabindex="0">
-                    {page + 1 + pageSelectorOffset}
-                    <input
-                        checked={page === 0}
-                        type="radio"
-                        name="page"
-                        id="page{page + 1}"
-                        onclick={() => {
-                            pageStart = 0 + 10 * (page + pageSelectorOffset);
-                            pageEnd = 9 + 10 * (page + pageSelectorOffset);
-                        }}
-                    />
-                </label>
-            {/each}
-            {#if contractPageNumber >= 10}
-                <button
-                    id="next_page"
-                    onclick={async (_) => {
-                        const fetchedPage = await fetch(
-                            `/contracts?quantity=10&offset=1${10 * ++pageSelectorOffset}`,
-                        );
-                        // Filtro antes do forEach
-                        (await fetchedPage.json()).forEach(
-                            (newContract: TableContract) =>
-                                contracts.push(newContract),
-                        );
-
-                        const selectedPage = document.querySelector(
-                            "#contract-page-selector > label:has(+label > input:checked)",
-                        );
-                        if (selectedPage) {
-                            const element =
-                                selectedPage.firstElementChild as HTMLInputElement;
-                            element.checked = true;
-                        } else {
-                            pageStart = 0 + 10 * pageSelectorOffset;
-                            pageEnd = 9 + 10 * pageSelectorOffset;
-                        }
-                    }}
-                >
-                    {">>"}
-                </button>
-            {/if}
-        </div>
-        <div
-            id="contract-list"
-            style:height={contractPageNumber >= 10 ? "91dvh" : "95dvh"}
-        >
-            {#each currentPage as contract}
-                <InfoTile {contract} />
-            {:else}
-                <p id="empty-list">Nenhum contrato localmente</p>
-            {/each}
-        </div>
     </section>
-    <div id="body-scroll-dots">
-        {#each { length: 2 }, scrollPosition}
-            <label for="page_scroll_step_{scrollPosition}">
-                {#if pageScrollPosition === scrollPosition}
-                    <svg
-                        viewBox="0 -960 960 960"
-                        version="1.1"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <rect
-                            width="160"
-                            height="3096.7742"
-                            x="400"
-                            y="-2000.38708"
-                            ry="269.1402"
-                        />
-                    </svg>
-                {:else}
-                    <svg
-                        viewBox="0 -960 960 960"
-                        version="1.1"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            d="M 352.875,-352.875 C 317.625,-388.125 300,-430.5 300,-480 c 0,-49.5 17.625,-91.875 52.875,-127.125 C 388.125,-642.375 430.5,-660 480,-660 c 49.5,0 91.875,17.625 127.125,52.875 35.25,35.25 52.875,77.625 52.875,127.125 0,49.5 -17.625,91.875 -52.875,127.125 C 571.875,-317.625 529.5,-300 480,-300 c -49.5,0 -91.875,-17.625 -127.125,-52.875 z"
-                        />
-                    </svg>
-                {/if}
-                <input
-                    type="radio"
-                    name="page_scroll_steps"
-                    id="page_scroll_step_{scrollPosition}"
-                    checked={pageScrollPosition === scrollPosition}
-                    bind:group={pageScrollPosition}
-                    value={scrollPosition}
-                />
-            </label>
-        {/each}
-    </div>
 </main>
 
 <style>
@@ -575,93 +248,95 @@
         height: 9dvh;
         width: 100%;
 
-        position: fixed;
+        background-image: linear-gradient(
+            224deg,
+            var(--primary-color),
+            var(--secondary-color)
+        );
 
-        background-color: var(--background);
-        box-shadow: 0px 1px 1px var(--text-color);
+        * {
+            color: var(--light-text-color);
+        }
 
-        button {
-            margin-right: 10px;
+        button:has(h1) {
+            display: contents;
+            cursor: pointer;
+
+            h1 {
+                display: flex;
+                align-items: center;
+                gap: 3px;
+
+                svg {
+                    height: 32px;
+                    width: 32px;
+                }
+            }
+        }
+
+        div {
+            display: flex;
+            flex-flow: row nowrap;
+            align-items: flex-end;
+
+            nav {
+                display: flex;
+                gap: 10px;
+                font-weight: bold;
+                font-size: 1.2rem;
+            }
+
+            #switch-theme-button {
+                margin-left: 10px;
+                margin-right: 10px;
+                border: none;
+                background-color: transparent;
+
+                &:hover svg {
+                    fill: var(--accent-color);
+                    stroke: var(--accent-color);
+                }
+            }
         }
     }
 
     main {
         display: flex;
 
-        &::-webkit-scrollbar {
-            display: none;
+        & > #intro {
+            min-height: 41dvh;
+            text-align: center;
+
+            h2 {
+                margin: var(--heading-space);
+            }
+
+            p {
+                margin: 10px 25px 0px;
+
+                color: var(--text-color-20);
+                font-size: 1.2rem;
+                text-indent: 15px;
+
+                dfn {
+                    font-style: normal;
+                }
+            }
+
+            a {
+                margin-top: 30px;
+            }
         }
 
-        & > aside {
-            background-color: var(--primary-color);
+        & > #graphs-carousel {
+            background-image: linear-gradient(
+                45deg,
+                var(--primary-color),
+                var(--secondary-color)
+            );
 
             #graphs {
                 display: flex;
-            }
-        }
-
-        & > section {
-            background-color: var(--background-10);
-            box-shadow: 1px 2px 2px var(--dark-text-color);
-
-            #contract-page-selector {
-                display: flex;
-                flex-flow: row nowrap;
-                justify-content: space-evenly;
-                padding-top: 3px;
-                background-color: var(--background);
-
-                label,
-                #next_page,
-                #previous_page {
-                    flex: 1 1 10%;
-                    padding: 3px;
-
-                    cursor: pointer;
-                    user-select: none;
-
-                    text-align: center;
-                    border-bottom: 1px solid var(--text-color);
-                }
-
-                label:has(input:checked) {
-                    border-top: 1px solid var(--text-color);
-                    border-left: 1px solid var(--text-color);
-                    border-right: 1px solid var(--text-color);
-                    border-bottom: none;
-                    background-color: var(--background-10);
-                }
-
-                #next_page,
-                #previous_page {
-                    border-top: none;
-                    border-left: none;
-                    border-right: none;
-                    background-color: transparent;
-                }
-            }
-
-            #contract-list > #empty-list {
-                width: 80%;
-                margin: 40% auto auto;
-                text-align: center;
-            }
-        }
-
-        & > #body-scroll-dots {
-            display: flex;
-            flex-flow: column nowrap;
-            position: fixed;
-            top: 50dvh;
-            right: 0dvw;
-
-            svg {
-                width: 20px;
-
-                &:has(+ input:checked) {
-                    height: 80px;
-                    stroke-width: 115.917;
-                }
             }
         }
     }
@@ -680,16 +355,21 @@
     @media (769px <= width <= 1440px) {
         main {
             flex-flow: column nowrap;
-            height: 100dvh;
+            height: 91dvh;
             overflow-y: auto;
             scroll-snap-type: y proximity;
 
-            aside {
-                min-height: 80dvh;
-                width: 100%;
-                margin: 14.5dvh auto 5.5dvh;
+            #intro {
+                min-height: 91dvh;
+                padding: 22.5dvh 50px;
+            }
 
-                scroll-snap-align: end;
+            #graphs-carousel {
+                min-height: 60dvh;
+                width: 100%;
+                margin-bottom: 20dvh;
+
+                scroll-snap-align: center;
 
                 #graphs {
                     flex-flow: row nowrap;
@@ -698,6 +378,7 @@
                     overflow-x: auto;
                     scroll-snap-type: x mandatory;
 
+                    scrollbar-width: none;
                     &::-webkit-scrollbar {
                         display: none;
                     }
@@ -721,73 +402,34 @@
                     }
                 }
             }
-
-            section {
-                height: 100dvh;
-                /* min-height: 91dvh; */
-                /* width: 90dvw; */
-                scroll-snap-align: start;
-
-                #contract-list {
-                    /* height: 91dvh; */
-                    max-height: 90.7%;
-                    /* max-height: calc(100% - 60px); */
-                    /* width: 90dvw; */
-                    padding: 0dvw 5dvw;
-                    margin: auto;
-                    margin-right: 20px;
-
-                    overflow: auto;
-
-                    /* &::-webkit-scrollbar { */
-                    /* display: none; */
-                    /* } */
-
-                    /* height: calc(100% - 33px); */
-                    /* height: 536.63px; */
-                    /* scrollbar-gutter: stable; */
-                }
-            }
         }
     }
 
     @media (481px <= width <= 768px) {
         main {
-            height: 100dvh;
             flex-flow: column nowrap;
+            height: 100dvh;
 
-            overflow-y: scroll;
+            overflow-y: auto;
             scroll-snap-type: y mandatory;
 
+            scrollbar-width: none;
             &::-webkit-scrollbar {
                 display: none;
             }
 
-            aside {
-                padding: 9.5dvh 0px 0.5dvh;
+            #intro {
+                min-height: 91dvh;
+                padding: 22.5dvh 50px;
                 scroll-snap-align: end;
+            }
+
+            #graphs-carousel {
+                padding: 5dvh 0px 5dvh;
+                scroll-snap-align: start;
 
                 #graphs {
                     flex-flow: column nowrap;
-                }
-            }
-
-            section {
-                scroll-snap-align: start;
-
-                & > #contract-page-selector {
-                    width: 100%;
-                    position: sticky;
-                    top: 32px;
-
-                    & > label:has(input:checked) {
-                        box-shadow: 0px 1px 3px black;
-                    }
-                }
-
-                & > #contract-list {
-                    height: 91dvh;
-                    overflow-y: auto;
                 }
             }
         }

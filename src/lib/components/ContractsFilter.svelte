@@ -1,17 +1,18 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { on } from "svelte/events";
-    import type { FilterOptions } from "$lib/types";
+    import { page } from "$app/state";
+    import { pushState } from "$app/navigation";
+    import { SvelteURLSearchParams } from "svelte/reactivity";
+    import type {
+        FilterOptions,
+        validURLCategory,
+        validURLMode,
+        validURLTitle,
+        validURLType,
+    } from "$lib/types";
 
-    const {
-        filters = $bindable(),
-        onfiltermenudisplay,
-        onfiltermenuhide,
-    }: {
-        filters: FilterOptions;
-        onfiltermenudisplay: () => void;
-        onfiltermenuhide: () => void;
-    } = $props();
+    const { filters = $bindable() }: { filters: FilterOptions } = $props();
 
     let searchConfigButtonChecked = $state(true);
     let searchConfigMenu: HTMLMenuElement;
@@ -28,14 +29,17 @@
         ),
     );
 
+    const URLFilters = new SvelteURLSearchParams();
+
     onMount(() => {
         const resizeFilterOptionsMenu = function () {
             const filterMenuButtonDimensions =
                 filterMenuButton.getBoundingClientRect();
-            if (
+
+            const filterOptionsMenuHasSpaceBellow =
                 filterOptionsMenu.offsetHeight <
-                window.innerHeight - filterMenuButtonDimensions.bottom
-            ) {
+                window.innerHeight - filterMenuButtonDimensions.bottom;
+            if (filterOptionsMenuHasSpaceBellow) {
                 filterOptionsMenu.style.maxHeight = `${window.innerHeight - filterMenuButtonDimensions.bottom}px`;
                 filterOptionsMenu.style.top = `${filterMenuButtonDimensions.bottom}px`;
                 filterOptionsMenu.style.bottom = "auto";
@@ -51,16 +55,13 @@
                 if (filterMenuButton.contains(event.target as HTMLElement)) {
                     if (filterButtonChecked) {
                         filterOptionsMenu.style.display = "none";
-                        onfiltermenuhide();
                     } else {
                         filterOptionsMenu.style.display = "flex";
-                        onfiltermenudisplay();
-                        resizeFilterOptionsMenu();
+                        // resizeFilterOptionsMenu();
                     }
                 } else {
                     filterButtonChecked = false;
                     filterOptionsMenu.style.display = "none";
-                    onfiltermenuhide();
                 }
             }
         };
@@ -69,7 +70,6 @@
             if (event.key === "Escape") {
                 filterButtonChecked = false;
                 filterOptionsMenu.style.display = "none";
-                onfiltermenuhide();
             }
         };
 
@@ -213,6 +213,69 @@
                                                         )
                                                     ]
                                                 }
+                                                onkeyup={(e) => {
+                                                    if (
+                                                        e.currentTarget.value
+                                                            .length > 0
+                                                    ) {
+                                                        URLFilters.set(
+                                                            choice
+                                                                .replace(
+                                                                    " ",
+                                                                    "_",
+                                                                )
+                                                                .replace(
+                                                                    "í",
+                                                                    "i",
+                                                                )
+                                                                .replace(
+                                                                    "á",
+                                                                    "a",
+                                                                )
+                                                                .toLowerCase(),
+                                                            e.currentTarget
+                                                                .value,
+                                                        );
+                                                    } else {
+                                                        URLFilters.delete(
+                                                            choice
+                                                                .replace(
+                                                                    " ",
+                                                                    "_",
+                                                                )
+                                                                .replace(
+                                                                    "í",
+                                                                    "i",
+                                                                )
+                                                                .replace(
+                                                                    "á",
+                                                                    "a",
+                                                                )
+                                                                .toLowerCase(),
+                                                            URLFilters.get(
+                                                                choice
+                                                                    .replace(
+                                                                        " ",
+                                                                        "_",
+                                                                    )
+                                                                    .replace(
+                                                                        "í",
+                                                                        "i",
+                                                                    )
+                                                                    .replace(
+                                                                        "á",
+                                                                        "a",
+                                                                    )
+                                                                    .toLowerCase(),
+                                                            )!,
+                                                        );
+                                                    }
+
+                                                    pushState(
+                                                        `?${URLFilters.toString()}`,
+                                                        page.state,
+                                                    );
+                                                }}
                                             />
                                         </span>
                                     </label>
@@ -236,6 +299,43 @@
                                                     )
                                                 ]
                                             }
+                                            onkeyup={(e) => {
+                                                if (
+                                                    e.currentTarget.checkValidity()
+                                                ) {
+                                                    URLFilters.set(
+                                                        choice
+                                                            .replace(" ", "_")
+                                                            .replace("ê", "e")
+                                                            .toLowerCase(),
+                                                        e.currentTarget.value,
+                                                    );
+                                                } else {
+                                                    URLFilters.delete(
+                                                        choice
+                                                            .replace(" ", "_")
+                                                            .replace("ê", "e")
+                                                            .toLowerCase(),
+                                                        URLFilters.get(
+                                                            choice
+                                                                .replace(
+                                                                    " ",
+                                                                    "_",
+                                                                )
+                                                                .replace(
+                                                                    "ê",
+                                                                    "e",
+                                                                )
+                                                                .toLowerCase(),
+                                                        )!,
+                                                    );
+                                                }
+
+                                                pushState(
+                                                    `?${URLFilters.toString()}`,
+                                                    page.state,
+                                                );
+                                            }}
                                         />
                                     </label>
                                 </li>
@@ -248,6 +348,69 @@
                                             type="checkbox"
                                             value={choice}
                                             bind:group={option.selected}
+                                            onclick={(e) => {
+                                                if (e.currentTarget.checked) {
+                                                    URLFilters.append(
+                                                        option.title
+                                                            .replace(" ", "_")
+                                                            .replace("á", "a")
+                                                            .replace("ê", "e")
+                                                            .replace("í", "i")
+                                                            .toLowerCase() as validURLTitle,
+                                                        choice
+                                                            .replace("á", "a")
+                                                            .replace("ã", "a")
+                                                            .replace("é", "e")
+                                                            .replace("ê", "e")
+                                                            .replace("ú", "u")
+                                                            .replace("ç", "c")
+                                                            .replace(
+                                                                " (TIC)",
+                                                                "",
+                                                            )
+                                                            .replace(
+                                                                " (ACT)",
+                                                                "",
+                                                            )
+                                                            .toLowerCase() as
+                                                            | validURLCategory
+                                                            | validURLType
+                                                            | validURLMode,
+                                                    );
+                                                } else {
+                                                    URLFilters.delete(
+                                                        option.title
+                                                            .replace(" ", "_")
+                                                            .replace("á", "a")
+                                                            .replace("ê", "e")
+                                                            .replace("í", "i")
+                                                            .toLowerCase() as validURLTitle,
+                                                        choice
+                                                            .replace("á", "a")
+                                                            .replace("ã", "a")
+                                                            .replace("é", "e")
+                                                            .replace("ê", "e")
+                                                            .replace("ú", "u")
+                                                            .replace("ç", "c")
+                                                            .replace(
+                                                                " (TIC)",
+                                                                "",
+                                                            )
+                                                            .replace(
+                                                                " (ACT)",
+                                                                "",
+                                                            )
+                                                            .toLowerCase() as
+                                                            | validURLCategory
+                                                            | validURLType
+                                                            | validURLMode,
+                                                    );
+                                                }
+                                                pushState(
+                                                    `?${URLFilters.toString()}`,
+                                                    page.state,
+                                                );
+                                            }}
                                         />
                                         {choice}
                                     </label>
@@ -264,7 +427,12 @@
 <style>
     search {
         display: flex;
+        flex-flow: row nowrap;
         height: 32px;
+        padding-top: 2px;
+
+        position: sticky;
+        top: 0px;
 
         gap: 5px;
         z-index: 9;
@@ -370,7 +538,8 @@
         }
 
         & > label[for="filter-search"] {
-            padding: 0px 3px;
+            height: inherit;
+            padding: 1px 3px;
             margin-right: 5px;
         }
 
@@ -381,6 +550,7 @@
             width: 311px;
 
             position: absolute;
+            top: 105%;
             right: 0%;
 
             border: 1px solid var(--text-color);
@@ -481,8 +651,6 @@
     @media (481px <= width <= 768px) {
         search {
             width: 100%;
-            position: sticky;
-            top: 0px;
 
             & > menu#filter-options {
                 top: 105%;

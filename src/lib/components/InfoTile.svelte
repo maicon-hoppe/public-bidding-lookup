@@ -113,6 +113,11 @@
             background-color: var(--background-20);
             box-shadow: 1px 2px 2px var(--dark-text-color);
 
+            &:hover {
+                border: 1px solid var(--accent-color);
+                box-shadow: 1px 1px 1px var(--dark-text-color);
+            }
+
             header {
                 display: flex;
                 justify-content: space-between;
@@ -153,7 +158,10 @@
                 dl {
                     display: inline-block;
 
-                    dt, dd { display: inline; }
+                    dt, dd {
+                        display: inline;
+                        color: var(--text-color-20);
+                    }
 
                     dt {
                         font-weight: bold;
@@ -164,13 +172,11 @@
                     }
                 }
 
-                p { margin-top: 10px; }
+                p {
+                    margin-top: 10px;
+                    color: var(--text-color-20);
+                }
             }
-        }
-
-        section:hover {
-            border: 1px solid var(--accent-color);
-            box-shadow: 1px 1px 1px var(--dark-text-color);
         }
 
         section:focus-visible {

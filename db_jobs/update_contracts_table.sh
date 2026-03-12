@@ -7,7 +7,7 @@ FLAG=$1;
 function get_api_contracts()
 {
     local THIS_MONTH_FIRST=$(date +%Y-%m-01);
-    local THIS_MONTH_LAST=$(date -d "`date +%Y%m01` +1 month -2 day" +%Y-%m-%d);
+    local THIS_MONTH_LAST=$(date -d "`date +%Y-%m-01` +1 month -2 day" +%Y-%m-%d);
 
     local PAGE=$1
     local PAGE_SIZE=200

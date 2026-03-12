@@ -3,18 +3,81 @@
     import { getRelativePosition } from "chart.js/helpers";
     import { onMount } from "svelte";
     import { MediaQuery } from "svelte/reactivity";
+    import { goto } from "$app/navigation";
+    import { BRLCurrencyFormatter } from "$lib/utils";
 
     let {
         labels,
         values,
-        selected = $bindable(),
-    }: { labels: string[]; values: number[]; selected: number[] } = $props();
+    }: {
+        labels: string[];
+        values: number[];
+    } = $props();
 
     Chart.register(BarController, BarElement);
 
     const mqTabletScreen = new MediaQuery("(481px <= width <= 768px)");
     const mqDesktopScreen = new MediaQuery("(769px <= width <= 1440px)");
     const mqDarkTheme = new MediaQuery("(prefers-color-scheme: dark)");
+
+    const formattedLabels = $derived(
+        labels.map((preciseLabel) => {
+            const formatted: string[] = [];
+            const interval_string = preciseLabel.split(" ");
+            let lowerLimit: string;
+            if (+interval_string[0] < 1e6) {
+                lowerLimit = BRLCurrencyFormatter.formatToParts(
+                    +interval_string[0],
+                )
+                    .slice(0, 5)
+                    .map(({ type, value }) => value)
+                    .join("");
+            } else if (+interval_string[0] < 1e7) {
+                lowerLimit =
+                    BRLCurrencyFormatter.formatToParts(+interval_string[0])
+                        .slice(0, 5)
+                        .map(({ type, value }) => value)
+                        .join("")
+                        .substring(0, 6) + " M";
+            } else {
+                lowerLimit =
+                    BRLCurrencyFormatter.formatToParts(+interval_string[0])
+                        .slice(0, 3)
+                        .map(({ type, value }) => value)
+                        .join("") + " M";
+            }
+
+            formatted.push(+interval_string[0] === 0 ? "R$ 0" : lowerLimit);
+            formatted.push(interval_string[1]);
+
+            let upperLimit: string;
+            if (+interval_string[2] < 1e6) {
+                upperLimit = BRLCurrencyFormatter.formatToParts(
+                    +interval_string[2],
+                )
+                    .slice(2, 5)
+                    .map(({ type, value }) => value)
+                    .join("");
+            } else if (+interval_string[2] < 1e7) {
+                upperLimit =
+                    BRLCurrencyFormatter.formatToParts(+interval_string[2])
+                        .slice(2, 5)
+                        .map(({ type, value }) => value)
+                        .join("")
+                        .substring(0, 3) + " M";
+            } else {
+                upperLimit =
+                    BRLCurrencyFormatter.formatToParts(+interval_string[2])
+                        .slice(2, 3)
+                        .map(({ type, value }) => value)
+                        .join("") + " M";
+            }
+
+            formatted.push(upperLimit);
+
+            return formatted.join(" ");
+        }),
+    );
 
     let chartCanvas: HTMLCanvasElement;
     let chart: Chart<"line" | "bar">;
@@ -29,7 +92,7 @@
 
         chart = new Chart(chartCanvas, {
             data: {
-                labels: labels,
+                labels: formattedLabels,
                 datasets: [
                     {
                         type: "line",
@@ -89,18 +152,18 @@
                 },
                 onClick: (e) => {
                     const canvasPosition = getRelativePosition(e, chart);
-                    const labelValues = chart.scales.x.getLabelForValue(
-                        chart.scales.x.getValueForPixel(canvasPosition.x)!,
+                    const labelValues =
+                        labels[
+                            chart.scales.x.getValueForPixel(canvasPosition.x)!
+                        ];
+
+                    const selectedExpensesRange = labelValues
+                        .split(" à ")
+                        .map((value) => parseInt(value));
+
+                    goto(
+                        `/contratos?despesa_minima=${selectedExpensesRange[0]}&despesa_maxima=${selectedExpensesRange[1]}`,
                     );
-
-                    selected = labelValues.split(" à ").map((value) => {
-                        const result = value.substring(3);
-                        if (result.includes("M")) {
-                            return +result.slice(0, -2) * 1e6;
-                        }
-
-                        return +result;
-                    });
                 },
                 plugins: {
                     title: {
@@ -184,7 +247,6 @@
 
 <style>
     #chart-box {
-        /* border: 1px solid var(--text-color); */
         border-radius: var(--default-bradius);
         background-color: var(--background-10);
         box-shadow: 1px 2px 2px var(--dark-text-color);

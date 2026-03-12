@@ -1,5 +1,3 @@
-import { boolean } from "drizzle-orm/gel-core";
-
 export type Contract = {
     codigoOrgao: string,
     nomeOrgao: string,
@@ -87,3 +85,79 @@ export type FilterOptions = {
         selected: (string | number)[]
     }[]
 };
+
+export type validCategory = (
+    "Compras"
+    | "Serviços"
+    | "Serviços de Engenharia"
+    | "Serviços de Saúde"
+    | "Obras"
+    | "Mão de Obra"
+    | "Informática (TIC)"
+);
+
+export type validType = (
+    "Contrato"
+    | "Termo de Adesão"
+    | "Acordo de Cooperação Técnica (ACT)"
+    | "Credenciamento"
+    | "Concessão"
+    | "Empenho"
+    | "Outros"
+);
+
+export type validMode = (
+    "Pregão"
+    | "Concorrência"
+    | "Inexigibilidade"
+    | "Dispensa"
+    | "Não se aplica"
+);
+
+export type validURLTitle = (
+    "despesa_minima"
+    | "despesa_maxima"
+    | "vigencia_inicial"
+    | "vigencia_final"
+    | "categoria"
+    | "tipo"
+    | "modalidade"
+);
+
+export type validURLCategory = (
+    "compras"
+    | "servicos"
+    | "servicos_de_engenharia"
+    | "servicos_de_saude"
+    | "obras"
+    | "mao_de_obra"
+    | "informatica"
+);
+
+export type validURLType = (
+    "contrato"
+    | "termo_de_adesao"
+    | "acordo_de_cooperação_tecnica"
+    | "credenciamento"
+    | "concessao"
+    | "empenho"
+    | "outros"
+);
+
+export type validURLMode = (
+    "pregao"
+    | "concorrencia"
+    | "inexigibilidade"
+    | "dispensa"
+    | "nao_se_aplica"
+);
+
+export type URLFilterOptions = Partial<{
+    despesa_minima: string,
+    despesa_maxima: string,
+    vigencia_inicial: string,
+    vigencia_final: string,
+    categoria: validURLCategory[],
+    tipo: validURLType[],
+    modalidade: validURLMode[]
+}>;

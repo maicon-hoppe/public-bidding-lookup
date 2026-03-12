@@ -13,14 +13,17 @@
     import { getRelativePosition } from "chart.js/helpers";
     import { onMount } from "svelte";
     import { MediaQuery, SvelteDate } from "svelte/reactivity";
+    import { goto } from "$app/navigation";
     import { BRLCurrencyFormatter, BRLDateFormatter } from "$lib/utils";
     import type { ChartData, ChartConfiguration, Point } from "chart.js";
 
     let {
         labels,
         values,
-        selected = $bindable(),
-    }: { labels: string[]; values: Point[]; selected: string } = $props();
+    }: {
+        labels: string[];
+        values: Point[];
+    } = $props();
 
     Chart.register(
         CategoryScale,
@@ -124,13 +127,15 @@
                 },
                 onClick: (e) => {
                     const canvasPosition = getRelativePosition(e, chart);
-                    selected = chart.scales.x
+                    const selectedDate = chart.scales.x
                         .getLabelForValue(
                             chart.scales.x.getValueForPixel(canvasPosition.x)!,
                         )
                         .split("/")
                         .toReversed()
                         .join("-");
+
+                    goto(`/contratos?vigencia_inicial=${selectedDate}`);
                 },
                 plugins: {
                     title: {
@@ -244,7 +249,6 @@
 
 <style>
     #chart-box {
-        /* border: 1px solid var(--text-color); */
         border-radius: var(--default-bradius);
         background-color: var(--background-10);
         box-shadow: 1px 2px 2px var(--dark-text-color);

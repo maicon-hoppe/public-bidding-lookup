@@ -8,19 +8,24 @@
 :root {
     color-scheme: light dark;
 
-	--text-color: light-dark(hsl(0 0 10), hsl(0 0 90));
-	--light-text-color: hsl(0 0 90);
-	--dark-text-color: hsl(0 0 10);
-
 	--primary-color: hsl(286, 61%, 29%);
 	--secondary-color: hsl(332, 38%, 45%);
 	--accent-color: light-dark(hsl(37, 100%, 34%), hsl(37, 100%, 64%));
 
 	--primary-color-20: hsl(286, 61%, 49%);
+	--secondary-color-20: hsl(332, 38%, 65%);
 
 	--background: light-dark(hsl(0 0 95), hsl(0 0 5));
 	--background-10: light-dark(hsl(0 0 85), hsl(0 0 15));
 	--background-20: light-dark(hsl(0 0 80), hsl(0 0 20));
+
+	--text-color: light-dark(hsl(0 0 10), hsl(0 0 90));
+	--light-text-color: hsl(0 0 90);
+	--dark-text-color: hsl(0 0 10);
+
+	--text-color-20: light-dark(hsl(0 0 20), hsl(0 0 80));
+	--light-text-color-20: hsl(0 0 80);
+	--dark-text-color-20: hsl(0 0 20);
 
     --heading-size: 2rem;
     --text-size: 1rem;
@@ -49,10 +54,15 @@ body {
 	color: var(--text-color);
 	background-color: var(--background);
 
-	h1 { margin: var(--heading-space); }
+	h1 {
+		margin: var(--heading-space);
+		font-size: var(--heading-size);
+	}
+
 	hr { border-color: var(--text-color); }
 	a { color: var(--text-color); }
 	a:hover { color: var(--accent-color) }
+	strong { color: var(--accent-color); }
 
 	.default-button {
 		display: inline-block;
@@ -63,6 +73,7 @@ body {
 
 		border: none;
 		border-radius: var(--default-bradius);
+		background-color: var(--primary-color);
 		box-shadow: 1px 1px 1px hsla(0, 0%, 0%, 0.30);
 
 		&, & > a {
@@ -71,14 +82,30 @@ body {
 			font-weight: bold;
 			text-decoration: none;
 		}
-		background-color: var(--primary-color);
 
 		&:hover {
 			background-color: var(--primary-color-20);
 		}
+
+		&.alt {
+			background-color: var(--secondary-color);
+
+			&:hover {
+				background-color: var(--secondary-color-20);
+			}
+		}
+
+		&.big {
+			padding: 10px;
+		}
 	}
 
 	.secondary-button {
+		display: inline-block;
+		padding: 3px;
+
+		font-size: var(--text-size);
+
 		border: 2px solid var(--secondary-color);
 		border-radius: var(--default-bradius);
 		background-color: transparent;
@@ -89,6 +116,18 @@ body {
 		&:hover {
 			background-color: var(--secondary-color);
 			svg { fill: var(--light-text-color); }
+		}
+
+		&.alt {
+			border-color: var(--primary-color);
+
+			&:hover {
+				background-color: var(--primary-color);
+			}
+		}
+
+		&.big {
+			padding: 8px;
 		}
 	}
 }
