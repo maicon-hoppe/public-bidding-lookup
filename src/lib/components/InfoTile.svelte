@@ -1,12 +1,14 @@
 <script lang="ts">
-    import { BRLCurrencyFormatter as BRLCurrency, niFormatter } from "$lib/utils";
+    import {
+        BRLCurrencyFormatter as BRLCurrency,
+        niFormatter,
+    } from "$lib/utils";
     import type { TableContract } from "$lib/types";
     import Tooltip from "$lib/components/Tooltip.svelte";
 
     const { contract }: { contract: TableContract } = $props();
 
-    const describePurchaseMethod = function()
-    {
+    const describePurchaseMethod = function () {
         switch (contract.nomeModalidadeCompra) {
             case "Pregão":
                 return `
@@ -16,7 +18,7 @@
                     com disputa via lances sucessivos (geralmente eletrônicos), visando
                     agilidade e economia para a Administração Pública.
                 `;
-        
+
             case "Dispensa":
                 return `
                     Nas hipóteses de dispensa de licitação, admite-se que a Administração
@@ -27,7 +29,7 @@
                     exemplos são casos de baixo valor, que não justificam o tempo e o gasto
                     necessários, emergências/calamidades ou licitações desertas/fracassadas.
                 `;
-            
+
             case "Concorrência":
                 return `
                     Modalidade de licitação para contratação de bens e serviços especiais e
@@ -53,27 +55,25 @@
                 return "Nenhama forma de modalidade se aplica a essa contratação.";
 
             default:
-                return "Sem descrição"
-        };
-    }
+                return "Sem descrição";
+        }
+    };
 </script>
 
 <a href="/{contract.id}" rel="next">
     <section>
         <header>
-            <h3 title="{contract.nomeUnidadeRealizadoraCompra}">
+            <h3 title={contract.nomeUnidadeRealizadoraCompra}>
                 {contract.nomeUnidadeRealizadoraCompra}
             </h3>
-            <p id="total_price">{BRLCurrency.format(+(contract.valorGlobal))}</p>
+            <p id="total_price">{BRLCurrency.format(+contract.valorGlobal)}</p>
         </header>
         <main>
             <div id="catmod">
-                <Tooltip content="FOO">
-                    <dl>
-                        <dt>Categoria</dt>
-                        <dd>{contract.nomeCategoria}</dd>
-                    </dl>
-                </Tooltip>
+                <dl>
+                    <dt>Categoria</dt>
+                    <dd>{contract.nomeCategoria}</dd>
+                </dl>
                 <Tooltip content={describePurchaseMethod()}>
                     <dl>
                         <dt>Modalidade</dt>
@@ -91,12 +91,16 @@
                 <dl>
                     <dt>Fornecedor</dt>
                     <dd>{contract.nomeRazaoSocialFornecedor ?? "N/A"}</dd>
-                    <br>
+                    <br />
                     <dt>Ni Fornecedor</dt>
-                    <dd>{contract.niFornecedor ? niFormatter(contract.niFornecedor) : "N/A"}</dd>
+                    <dd>
+                        {contract.niFornecedor
+                            ? niFormatter(contract.niFornecedor)
+                            : "N/A"}
+                    </dd>
                 </dl>
             </div>
-            <hr>
+            <hr />
             <p>{contract.objeto}</p>
         </main>
     </section>
@@ -125,7 +129,7 @@
                 flex-wrap: nowrap;
 
                 margin: var(--heading-space);
-        
+
                 h3 {
                     text-wrap: nowrap;
                     text-overflow: ellipsis;
@@ -133,7 +137,9 @@
                     overflow: hidden;
                 }
 
-                h3:hover { color: var(--accent-color) }
+                h3:hover {
+                    color: var(--accent-color);
+                }
 
                 #total_price {
                     padding: 5px 8px;
@@ -148,7 +154,9 @@
             main {
                 margin: 0px 15px 10px;
 
-                div { margin-bottom: 10px; }
+                div {
+                    margin-bottom: 10px;
+                }
 
                 #catmod {
                     display: flex;
@@ -158,14 +166,15 @@
                 dl {
                     display: inline-block;
 
-                    dt, dd {
+                    dt,
+                    dd {
                         display: inline;
                         color: var(--text-color-20);
                     }
 
                     dt {
                         font-weight: bold;
-                    
+
                         &::after {
                             content: ":";
                         }
@@ -185,5 +194,7 @@
         }
     }
 
-    a:hover { color: var(--text-color) }
+    a:hover {
+        color: var(--text-color);
+    }
 </style>

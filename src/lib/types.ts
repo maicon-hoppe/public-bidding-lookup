@@ -56,11 +56,22 @@ export type TableContract = Pick<Contract,
     | "nomeCategoria"
     | "nomeTipo"
     | "nomeModalidadeCompra"
+    | "idCompra"
 > & {
     "id"?: number,
     "dataVigenciaInicial": Date,
     "dataVigenciaFinal"?: Date,
     "valorGlobal": string
+};
+
+export type TableContractItem = {
+    id: number,
+    idCompra: string,
+    quantidadeItem: number,
+    valorUnitarioItem: string,
+    descricaoIitem: string,
+    esfera: 'Federal' | 'Estadual' | 'Municipal',
+    poder: 'Executivo' | 'Legislativo' | 'Judiciário'
 };
 
 export type LocalContractRequestParameters = {

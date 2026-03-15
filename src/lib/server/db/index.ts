@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
 import { env } from '$env/dynamic/private';
-import type { TableContract } from '$lib/types';
+import type { TableContract, TableContractItem } from '$lib/types';
 import { count, desc, eq, sql } from 'drizzle-orm';
 
 if (!env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
@@ -123,6 +123,14 @@ export async function getDBContractData(id: number) {
     }
 
     return contract_list ? contract_list[0] : null;
+}
+
+export async function getDBContractItems(idCompra: string) {
+    return await (db
+        .select()
+        .from(schema.contractItemsTable)
+        .where(eq(schema.contractItemsTable.idCompra, idCompra))
+    ) as TableContractItem[]
 }
 
 export async function getDBContracts(quantity?: number, offset?: number) {

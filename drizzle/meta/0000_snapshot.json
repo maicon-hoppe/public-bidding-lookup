@@ -1,9 +1,87 @@
 {
-  "id": "e14eab03-c0c4-4a71-b34a-1f69e99bae0d",
+  "id": "0a1548c8-dbfc-45e4-9d21-a9c629ca493b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.itens_contrato": {
+      "name": "itens_contrato",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "id_compra": {
+          "name": "id_compra",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantidade": {
+          "name": "quantidade",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valor_unitario": {
+          "name": "valor_unitario",
+          "type": "numeric(11, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descricao": {
+          "name": "descricao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "esfera": {
+          "name": "esfera",
+          "type": "varchar(9)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "poder": {
+          "name": "poder",
+          "type": "varchar(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "itens_contrato_id_compra_contratos_id_compra_fk": {
+          "name": "itens_contrato_id_compra_contratos_id_compra_fk",
+          "tableFrom": "itens_contrato",
+          "tableTo": "contratos",
+          "columnsFrom": [
+            "id_compra"
+          ],
+          "columnsTo": [
+            "id_compra"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "esfera_valida": {
+          "name": "esfera_valida",
+          "value": "\"itens_contrato\".\"esfera\" IN ('Federal', 'Estadual', 'Municipal')"
+        },
+        "poder_valido": {
+          "name": "poder_valido",
+          "value": "\"itens_contrato\".\"poder\" IN ('Executivo', 'Legislativo', 'Judiciário')"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.contratos": {
       "name": "contratos",
       "schema": "",
@@ -12,6 +90,12 @@
           "name": "id",
           "type": "serial",
           "primaryKey": true,
+          "notNull": true
+        },
+        "id_compra": {
+          "name": "id_compra",
+          "type": "varchar(30)",
+          "primaryKey": false,
           "notNull": true
         },
         "vigencia_inicial": {
@@ -96,7 +180,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "contratos_id_compra_unique": {
+          "name": "contratos_id_compra_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id_compra"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
