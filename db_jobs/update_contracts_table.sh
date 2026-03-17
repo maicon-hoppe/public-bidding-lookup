@@ -128,7 +128,7 @@ while [ $REMAINING_PAGES -gt 0 ]; do
             fi;
 
             if [[ -z $FLAG ]]; then
-                DB_CONTRACT_PURCHASES=$(TABLE_CONTRACTS | jq '[.[] | pick(.idCompra, .dataVigenciaInicial)]');
+                DB_CONTRACT_PURCHASES=$(echo $TABLE_CONTRACTS | jq '[.[] | pick(.idCompra, .dataVigenciaInicial)]');
 
                 PURCHASE_TOTAL=$(echo $DB_CONTRACT_PURCHASES | jq '.|length');
                 echo "┏—————————————————————— CONTRACT_ITEMS ——————————————————————┓"
