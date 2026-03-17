@@ -4,8 +4,16 @@
         BRLDateFormatter as BRLDate,
         niFormatter,
     } from "$lib/utils";
+    import { onMount } from "svelte";
 
     const { data } = $props();
+
+    let complementaryInfo: HTMLDListElement;
+    onMount(() => {
+        complementaryInfo.hidden =
+            data.contract.informacoesComplementares !== null ||
+            data.contract.informacoesComplementares !== "";
+    });
 
     const describePurchaseMethod = function () {
         switch (data.contract.nomeModalidadeCompra) {
@@ -59,7 +67,7 @@
     };
 </script>
 
-<header>
+<header class="dark-theme">
     <a href="/">
         <h1>
             <svg
@@ -96,7 +104,7 @@
                     />
                 </g>
             </svg>
-            Despesas Públicas
+            Check Licitações <sup>BR</sup>
         </h1>
     </a>
     <div>
@@ -142,88 +150,152 @@
 
 <main>
     <section id="contract-summary">
-        <span id="top-row">
-            <dl id="money-display" class="light-theme">
-                <dt>Valor Global</dt>
-                <dd>{BRLCurrency.format(+data.contract.valorGlobal)}</dd>
-            </dl>
-            <section id="date-display">
-                <dl>
-                    <dt>Vigência Inicial:</dt>
-                    <dd>{BRLDate.format(data.contract.dataVigenciaInicial)}</dd>
-                </dl>
-                <dl>
-                    <dt>Vigência Final:</dt>
-                    <dd>{BRLDate.format(data.contract.dataVigenciaFinal)}</dd>
-                </dl>
-            </section>
-        </span>
+        <div id="title-display">
+            <h2>{data.contract.nomeTipo}</h2>
+            <h3>{data.contract.nomeCategoria}</h3>
+            <hr />
+            <span>
+                <strong>
+                    {BRLDate.format(data.contract.dataVigenciaInicial)}
+                </strong>
+                à
+                <strong>
+                    {BRLDate.format(data.contract.dataVigenciaFinal)}
+                </strong>
+            </span>
+        </div>
+        <dl id="money-display">
+            <dt class="dark-theme">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 -960 960 960"
+                >
+                    <path
+                        d="M444-200h70v-50q50-9 86-39t36-89q0-42-24-77t-96-61q-60-20-83-35t-23-41q0-26 18.5-41t53.5-15q32 0 50 15.5t26 38.5l64-26q-11-35-40.5-61T516-710v-50h-70v50q-50 11-78 44t-28 74q0 47 27.5 76t86.5 50q63 23 87.5 41t24.5 47q0 33-23.5 48.5T486-314q-33 0-58.5-20.5T390-396l-66 26q14 48 43.5 77.5T444-252v52Zm36 120q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"
+                    />
+                </svg>
+                Valor Global
+            </dt>
+            <dd>{BRLCurrency.format(+data.contract.valorGlobal)}</dd>
+        </dl>
         <dl id="info-display">
-            <dt>Orgão Responsável:</dt>
+            <dt>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 -960 960 960"
+                >
+                    <path
+                        d="M440-183v-274L200-596v274l240 139Zm80 0 240-139v-274L520-457v274Zm-40-343 237-137-237-137-237 137 237 137ZM160-252q-19-11-29.5-29T120-321v-318q0-22 10.5-40t29.5-29l280-161q19-11 40-11t40 11l280 161q19 11 29.5 29t10.5 40v318q0 22-10.5 40T800-252L520-91q-19 11-40 11t-40-11L160-252Zm320-228Z"
+                    />
+                </svg>
+                Orgão Responsável:
+            </dt>
             <dd>{data.contract.nomeOrgao}</dd>
 
-            <dt>Unidade Gestora:</dt>
+            <dt>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 -960 960 960"
+                >
+                    <path
+                        d="M440-183v-274L200-596v274l240 139Zm80 0 240-139v-274L520-457v274Zm-40-343 237-137-237-137-237 137 237 137ZM160-252q-19-11-29.5-29T120-321v-318q0-22 10.5-40t29.5-29l280-161q19-11 40-11t40 11l280 161q19 11 29.5 29t10.5 40v318q0 22-10.5 40T800-252L520-91q-19 11-40 11t-40-11L160-252Zm320-228Z"
+                    />
+                </svg>
+                Unidade Gestora:
+            </dt>
             <dd>{data.contract.nomeUnidadeGestora}</dd>
 
-            <dt>Fornecedor:</dt>
+            <dt id="supplier">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 -960 960 960"
+                >
+                    <path
+                        d="M664-121q-8-2-15-7l-120-70q-14-8-21.5-21.5T500-249v-141q0-16 7.5-29.5T529-441l120-70q7-5 15-7t16-2q8 0 15.5 2.5T710-511l120 70q14 8 22 21.5t8 29.5v141q0 16-8 29.5T830-198l-120 70q-7 4-14.5 6.5T680-119q-8 0-16-2ZM287-527q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47ZM80-160v-112q0-33 17-62t47-44q51-26 115-44t141-18h14q6 0 12 2-8 18-13.5 37.5T404-360h-4q-71 0-127.5 18T180-306q-9 5-14.5 14t-5.5 20v32h252q6 21 16 41.5t22 38.5H80Zm376.5-423.5Q480-607 480-640t-23.5-56.5Q433-720 400-720t-56.5 23.5Q320-673 320-640t23.5 56.5Q367-560 400-560t56.5-23.5ZM400-640Zm12 400Zm174-166 94 55 94-55-94-54-94 54Zm124 208 90-52v-110l-90 53v109Zm-150-52 90 53v-109l-90-53v109Z"
+                    />
+                </svg>
+                Fornecedor ({data.contract.niFornecedor
+                    ? niFormatter(data.contract.niFornecedor)
+                    : "N/A"}):
+            </dt>
             <dd>{data.contract.nomeRazaoSocialFornecedor ?? "N/A"}</dd>
 
-            <dt>NI Fornecedor:</dt>
-            <dd>{data.contract.niFornecedor ? niFormatter(data.contract.niFornecedor) : "N/A"}</dd>
-
-            <dt>Unidade Compradora:</dt>
+            <dt>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 -960 960 960"
+                >
+                    <path
+                        d="M160-200h80v-320h480v320h80v-426L480-754 160-626v426Zm-80 80v-560l400-160 400 160v560H640v-320H320v320H80Zm280 0v-80h80v80h-80Zm80-120v-80h80v80h-80Zm80 120v-80h80v80h-80ZM240-520h480-480Z"
+                    />
+                </svg>
+                Unidade Compradora:
+            </dt>
             <dd>{data.contract.nomeUnidadeRealizadoraCompra}</dd>
+        </dl>
 
-            <dt>Categoria:</dt>
-            <dd>{data.contract.nomeCategoria}</dd>
-
-            <dt>Tipo:</dt>
-            <dd>{data.contract.nomeTipo}</dd>
-
-            <dt>Informações Complementares:</dt>
+        <dl hidden bind:this={complementaryInfo} id="complementary-info">
+            <dt>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 -960 960 960"
+                >
+                    <path
+                        d="M423.5-703.5Q400-727 400-760t23.5-56.5Q447-840 480-840t56.5 23.5Q560-793 560-760t-23.5 56.5Q513-680 480-680t-56.5-23.5ZM420-120v-480h120v480H420Z"
+                    />
+                </svg>
+                Informações Complementares:
+            </dt>
             <dd>{data.contract.informacoesComplementares || "N/A"}</dd>
         </dl>
-        <section id="objeto">
-            {data.contract.objeto}
-        </section>
         <dl id="modalidade">
             <dt>{data.contract.nomeModalidadeCompra}</dt>
             <dd>{describePurchaseMethod()}</dd>
         </dl>
     </section>
-
-    <table>
-        <thead>
-            <tr>
-                <th scope="col">Quantidade</th>
-                <th scope="col">Descrição</th>
-                <th scope="col">Valor Unitário</th>
-                <th scope="col">Poder</th>
-                <th scope="col">Esfera</th>
-            </tr>
-        </thead>
-        <tbody>
-            {#each data.contract_items as contract_item}
+    <hr />
+    <p id="objeto">
+        {data.contract.objeto}
+    </p>
+    <div id="table-container">
+        <table>
+            <thead>
                 <tr>
-                    <td>{contract_item.quantidadeItem}</td>
-                    <td>{contract_item.descricaoIitem}</td>
-                    <td
-                        >{BRLCurrency.format(
-                            +contract_item.valorUnitarioItem,
-                        )}</td
-                    >
-                    <td>{contract_item.poder}</td>
-                    <td>{contract_item.esfera}</td>
+                    <th scope="colgroup" colspan="5">Despesas</th>
                 </tr>
-            {/each}
-        </tbody>
-    </table>
+                <tr>
+                    <th scope="col">Quantidade</th>
+                    <th scope="col">Descrição</th>
+                    <th scope="col">Valor Unitário</th>
+                    <th scope="col">Poder</th>
+                    <th scope="col">Esfera</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each data.contract_items as contract_item}
+                    <tr>
+                        <td>{contract_item.quantidadeItem}</td>
+                        <td class="qualitative-info">
+                            {contract_item.descricaoIitem}
+                        </td>
+                        <td>
+                            {BRLCurrency.format(
+                                +contract_item.valorUnitarioItem,
+                            )}
+                        </td>
+                        <td class="qualitative-info">{contract_item.poder}</td>
+                        <td class="qualitative-info">{contract_item.esfera}</td>
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    </div>
 </main>
 
 <style>
     header {
         display: flex;
-        flex-flow: row wrap;
+        flex-flow: row nowrap;
         align-items: center;
         justify-content: space-between;
         height: 9dvh;
@@ -236,7 +308,7 @@
         );
 
         * {
-            color: var(--light-text-color);
+            color: var(--dark-text-color);
         }
 
         a:has(h1) {
@@ -245,7 +317,7 @@
 
             h1 {
                 display: flex;
-                align-items: center;
+                align-items: flex-start;
                 gap: 3px;
 
                 svg {
@@ -276,6 +348,11 @@
                     fill: var(--accent-color);
                     stroke: var(--accent-color);
                 }
+
+                &:active svg {
+                    fill: var(--accent-color-20);
+                    stroke: var(--accent-color-20);
+                }
             }
         }
     }
@@ -283,118 +360,169 @@
     main {
         & > section#contract-summary {
             display: grid;
+            align-items: center;
             grid-template:
-                "a a c" auto
-                "b b c" auto
-                "b b c" auto
-                "d d d" auto / 1fr 1fr 1fr;
+                "a . b" auto
+                "c c d" auto
+                "c c d" auto
+                "e e e" auto / 1fr 1fr 1fr;
 
             gap: 10px;
-            margin: 20px auto;
-            color: var(--text-color-20);
+            padding: 10px;
+            color: var(--dark-text-color-20);
+
+            background-image: repeating-linear-gradient(
+                277deg,
+                var(--primary-color),
+                var(--secondary-color)
+            );
 
             dt {
+                color: var(--dark-accent-color);
                 font-weight: bold;
+
+                svg {
+                    height: var(--text-size);
+                    width: var(--text-size);
+
+                    fill: var(--dark-text-color);
+                    stroke: var(--dark-text-color);
+                }
             }
 
             dd {
-                text-indent: 1rem;
+                margin-left: calc(24px + 1rem);
             }
 
-            #top-row {
+            #title-display {
                 grid-area: a;
-                display: flex;
-                flex-flow: row nowrap;
-                align-items: center;
-                gap: 10%;
+                margin-bottom: 5px;
+                color: var(--dark-text-color);
 
-                #money-display {
-                    flex: 0.5 1 20%;
-                    /* width: max-content; */
-                    /* margin: 10px; */
-
-                    border: 1px solid grey;
-                    border-radius: var(--default-bradius);
-                    background-color: var(--background-10);
-
-                    dt,
-                    dd {
-                        padding: 5px;
-                        color: var(--text-color);
-                    }
-
-                    dt {
-                        border-bottom: 1px solid gray;
-                        text-align: center;
-                    }
-
-                    dd {
-                        color: var(--accent-color);
-                    }
+                h3 {
+                    margin-bottom: var(--text-space);
+                    font-size: var(--subheading-size);
+                    font-weight: normal;
                 }
 
-                #date-display {
-                    flex: 1.5 1 80%;
+                hr {
+                    border-color: var(--dark-text-color);
+                }
 
-                    dl {
-                        display: inline-block;
-                        margin: 10px;
-                    }
+                span {
+                    font-size: var(--subtext-size);
+                }
+            }
+
+            #money-display {
+                grid-area: b;
+                justify-self: right;
+                margin-right: 10px;
+
+                border-radius: var(--default-bradius);
+                background-color: var(--background-20);
+
+                dt,
+                dd {
+                    padding: 5px;
+                    color: var(--text-color);
+                }
+
+                dt {
+                    border-bottom: 1px solid var(--text-color-20);
+                    border-top-left-radius: var(--default-bradius);
+                    border-top-right-radius: var(--default-bradius);
+
+                    text-align: center;
+
+                    color: var(--text-color);
+                    background-color: var(--primary-color-20);
                 }
             }
 
             #info-display {
-                grid-area: b;
+                grid-area: c;
 
                 dt {
-                    margin-top: 5px;
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                    margin: 5px 0px 3px;
                     font-weight: bold;
+
+                    &#supplier {
+                        margin-top: 15px;
+                    }
                 }
             }
 
-            #objeto {
-                grid-area: c;
-                text-wrap-style: balance;
+            #complementary-info {
+                grid-area: d;
+                padding: 10px;
+                border: 1px solid var(--text-color-20);
+                border-radius: var(--default-bradius);
             }
 
             #modalidade {
-                grid-area: d;
+                grid-area: e;
+                margin-top: 15px;
 
                 dt {
                     font-weight: bold;
+                }
+
+                dd {
+                    margin-left: unset;
+                    text-indent: calc(24px + 1rem);
                 }
             }
         }
 
+        section#contract-summary + hr {
+            width: 8dvw;
+            margin: 20px auto 30px;
+        }
+
+        #objeto {
+            margin: 10px 10px 30px;
+        }
+
         table {
             width: 96dvw;
-            margin: 5px auto;
+            margin: 10px auto;
             border-collapse: collapse;
             border-radius: var(--default-bradius);
             outline: 1px solid var(--text-color-20);
 
             thead {
-                border-bottom: 1px solid var(--text-color-20);
-                background-color: var(--background-20);
+                background-color: var(--background-10);
 
-                th:not(:last-child) {
-                    border-right: 1px solid var(--text-color-20);
+                th {
+                    border-bottom: 1px solid var(--text-color-20);
+
+                    &:not(:last-child) {
+                        border-right: 1px solid var(--text-color-20);
+                    }
                 }
             }
 
             tbody > tr {
                 color: var(--text-color-20);
 
+                &:nth-child(even) {
+                    background-color: var(--background-20);
+                }
+
+                & > td.qualitative-info {
+                    text-align: center;
+                }
+
                 & > td:not(:last-child) {
                     border-right: 1px solid currentColor;
                 }
 
-                & > :where(:first-child, :nth-child(3n)) {
+                & > td:where(:first-child, :nth-child(3n)) {
                     text-align: right;
-                }
-
-                &:nth-child(even) {
-                    background-color: var(--background-10);
                 }
             }
 
@@ -408,7 +536,17 @@
     svg {
         height: 24px;
         width: 24px;
-        stroke: var(--light-text-color);
-        fill: var(--light-text-color);
+        stroke: var(--text-color);
+        fill: var(--text-color);
+    }
+
+    @media (481px <= width <= 768px) {
+        header h1 {
+            font-size: var(--subheading-size);
+        }
+
+        main > #table-container {
+            overflow-x: auto;
+        }
     }
 </style>

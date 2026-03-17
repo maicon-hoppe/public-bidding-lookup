@@ -148,118 +148,109 @@
     let pageStart = $state(0);
     let pageEnd = $state(9);
     let pageSelectorOffset = $state(0);
-    const contracts = $derived(
-        data.contracts.filter((value) => {
-            let filtersConditions: boolean[] = [];
 
-            const filterText = filters.textSearch.text.toUpperCase();
-            if (filters.textSearch.selected === "Comprador") {
-                filtersConditions.push(
-                    value.nomeUnidadeRealizadoraCompra
-                        .toUpperCase()
-                        .includes(filterText),
-                );
-            } else if (filters.textSearch.selected === "Fornecedor") {
-                filtersConditions.push(
-                    value.nomeRazaoSocialFornecedor
-                        ? value.nomeRazaoSocialFornecedor
-                              .toUpperCase()
-                              .includes(filterText)
-                        : false,
-                );
-            } else if (filters.textSearch.selected === "Unidade Gestora") {
-                filtersConditions.push(
-                    value.nomeUnidadeGestora.toUpperCase().includes(filterText),
-                );
+    const filterContract = function (value: TableContract) {
+        let filtersConditions: boolean[] = [];
+
+        const filterText = filters.textSearch.text.toUpperCase();
+        if (filters.textSearch.selected === "Comprador") {
+            filtersConditions.push(
+                value.nomeUnidadeRealizadoraCompra
+                    .toUpperCase()
+                    .includes(filterText),
+            );
+        } else if (filters.textSearch.selected === "Fornecedor") {
+            filtersConditions.push(
+                value.nomeRazaoSocialFornecedor
+                    ? value.nomeRazaoSocialFornecedor
+                          .toUpperCase()
+                          .includes(filterText)
+                    : false,
+            );
+        } else if (filters.textSearch.selected === "Unidade Gestora") {
+            filtersConditions.push(
+                value.nomeUnidadeGestora.toUpperCase().includes(filterText),
+            );
+        }
+
+        const filterExpenses = {
+            initial: Number.isNaN(expenseFilterOptions.selected[0])
+                ? undefined
+                : Number(expenseFilterOptions.selected[0]),
+            final: Number.isNaN(expenseFilterOptions.selected[1])
+                ? undefined
+                : Number(expenseFilterOptions.selected[1]),
+        };
+
+        if (filterExpenses.initial && filterExpenses.initial >= 0) {
+            filtersConditions.push(
+                +value.valorGlobal >= filterExpenses.initial,
+            );
+        }
+        if (filterExpenses.final && filterExpenses.final >= 0) {
+            filtersConditions.push(+value.valorGlobal <= filterExpenses.final);
+        }
+
+        let datesInRange: boolean[] = [];
+        const filterDates = {
+            initial: dateFilterOptions.selected[0],
+            final: dateFilterOptions.selected[1],
+        };
+        if (filterDates.initial && filterDates.final) {
+            const localeInitialDate = new Date(filterDates.initial);
+            datesInRange.push(value.dataVigenciaInicial >= localeInitialDate);
+
+            const localeFinalDate = new Date(filterDates.final);
+            localeFinalDate.setDate(localeFinalDate.getDate() + 1);
+            if (value.dataVigenciaFinal) {
+                datesInRange.push(value.dataVigenciaFinal <= localeFinalDate);
+            } else {
+                datesInRange.push(false);
             }
-
-            const filterExpenses = {
-                initial: Number.isNaN(expenseFilterOptions.selected[0])
-                    ? undefined
-                    : Number(expenseFilterOptions.selected[0]),
-                final: Number.isNaN(expenseFilterOptions.selected[1])
-                    ? undefined
-                    : Number(expenseFilterOptions.selected[1]),
-            };
-
-            if (filterExpenses.initial && filterExpenses.initial >= 0) {
-                filtersConditions.push(
-                    +value.valorGlobal >= filterExpenses.initial,
-                );
-            }
-            if (filterExpenses.final && filterExpenses.final >= 0) {
-                filtersConditions.push(
-                    +value.valorGlobal <= filterExpenses.final,
-                );
-            }
-
-            let datesInRange: boolean[] = [];
-            const filterDates = {
-                initial: dateFilterOptions.selected[0],
-                final: dateFilterOptions.selected[1],
-            };
-            if (filterDates.initial && filterDates.final) {
-                const localeInitialDate = new Date(filterDates.initial);
-                datesInRange.push(
-                    value.dataVigenciaInicial >= localeInitialDate,
-                );
-
-                const localeFinalDate = new Date(filterDates.final);
-                localeFinalDate.setDate(localeFinalDate.getDate() + 1);
-                if (value.dataVigenciaFinal) {
-                    datesInRange.push(
-                        value.dataVigenciaFinal <= localeFinalDate,
-                    );
-                } else {
-                    datesInRange.push(false);
-                }
-            } else if (filterDates.initial) {
-                const offsetDate = new Date(value.dataVigenciaInicial);
+        } else if (filterDates.initial) {
+            const offsetDate = new Date(value.dataVigenciaInicial);
+            offsetDate.setHours(offsetDate.getHours() - 3);
+            datesInRange.push(
+                offsetDate.toISOString().substring(0, 10) ===
+                    filterDates.initial,
+            );
+        } else if (filterDates.final) {
+            if (value.dataVigenciaFinal) {
+                const offsetDate = new Date(value.dataVigenciaFinal);
                 offsetDate.setHours(offsetDate.getHours() - 3);
                 datesInRange.push(
                     offsetDate.toISOString().substring(0, 10) ===
-                        filterDates.initial,
+                        filterDates.final,
                 );
-            } else if (filterDates.final) {
-                if (value.dataVigenciaFinal) {
-                    const offsetDate = new Date(value.dataVigenciaFinal);
-                    offsetDate.setHours(offsetDate.getHours() - 3);
-                    datesInRange.push(
-                        offsetDate.toISOString().substring(0, 10) ===
-                            filterDates.final,
-                    );
-                } else {
-                    datesInRange.push(false);
-                }
+            } else {
+                datesInRange.push(false);
             }
+        }
 
-            filtersConditions.push(
-                datesInRange.length === 0 ||
-                    datesInRange.every((dateInRange) => dateInRange),
-            );
+        filtersConditions.push(
+            datesInRange.length === 0 ||
+                datesInRange.every((dateInRange) => dateInRange),
+        );
 
-            filtersConditions.push(
-                categoryFilterOptions.selected.length === 0 ||
-                    categoryFilterOptions.selected.includes(
-                        value.nomeCategoria,
-                    ),
-            );
+        filtersConditions.push(
+            categoryFilterOptions.selected.length === 0 ||
+                categoryFilterOptions.selected.includes(value.nomeCategoria),
+        );
 
-            filtersConditions.push(
-                typeFilterOptions.selected.length === 0 ||
-                    typeFilterOptions.selected.includes(value.nomeTipo),
-            );
+        filtersConditions.push(
+            typeFilterOptions.selected.length === 0 ||
+                typeFilterOptions.selected.includes(value.nomeTipo),
+        );
 
-            filtersConditions.push(
-                modeFilterOptions.selected.length === 0 ||
-                    modeFilterOptions.selected.includes(
-                        value.nomeModalidadeCompra,
-                    ),
-            );
+        filtersConditions.push(
+            modeFilterOptions.selected.length === 0 ||
+                modeFilterOptions.selected.includes(value.nomeModalidadeCompra),
+        );
 
-            return filtersConditions.every((filterPassed) => filterPassed);
-        }),
-    );
+        return filtersConditions.every((filterPassed) => filterPassed);
+    };
+
+    const contracts = $derived(data.contracts.filter(filterContract));
     const currentPage = $derived(contracts.slice(pageStart, pageEnd));
     const contractPageNumber = $derived(
         Math.min(contracts.length / 10, 10) < 2
@@ -305,17 +296,18 @@
                     />
                 </g>
             </svg>
-            Despesas Públicas
+            Check Licitações <sup>BR</sup>
         </h1>
     </a>
     <div>
-        <nav data-sveltekit-reload>
+        <nav class="dark-theme" data-sveltekit-reload>
             <a href="/">Home</a>
             <a href="/contratos">Contratos</a>
         </nav>
         <button
             aria-label="Switch Theme"
             id="switch-theme-button"
+            class="dark-theme"
             onclick={() => {
                 const isDarkTheme = window.matchMedia(
                     "(prefers-color-scheme: dark)",
@@ -398,11 +390,11 @@
                     const fetchedPage = await fetch(
                         `/contratos_json?quantity=10&offset=1${10 * ++pageSelectorOffset}`,
                     );
-                    // Filtro antes do forEach
-                    (await fetchedPage.json()).forEach(
-                        (newContract: TableContract) =>
+                    ((await fetchedPage.json()) as TableContract[])
+                        .filter(filterContract)
+                        .forEach((newContract: TableContract) =>
                             contracts.push(newContract),
-                    );
+                        );
 
                     const selectedPage = document.querySelector(
                         "#contract-page-selector > label:has(+label > input:checked)",
@@ -433,7 +425,7 @@
 <style>
     header {
         display: flex;
-        flex-flow: row wrap;
+        flex-flow: row nowrap;
         align-items: center;
         justify-content: space-between;
         height: 9dvh;
@@ -446,7 +438,7 @@
         );
 
         * {
-            color: var(--light-text-color);
+            color: var(--dark-text-color);
         }
 
         a:has(h1) {
@@ -455,7 +447,7 @@
 
             h1 {
                 display: flex;
-                align-items: center;
+                align-items: flex-start;
                 gap: 3px;
 
                 svg {
@@ -485,6 +477,11 @@
                 &:hover svg {
                     fill: var(--accent-color);
                     stroke: var(--accent-color);
+                }
+
+                &:active svg {
+                    fill: var(--accent-color-20);
+                    stroke: var(--accent-color-20);
                 }
             }
         }
@@ -552,8 +549,8 @@
     svg {
         height: 24px;
         width: 24px;
-        stroke: var(--light-text-color);
-        fill: var(--light-text-color);
+        stroke: var(--dark-text-color);
+        fill: var(--dark-text-color);
     }
 
     @media (769px <= width <= 1440px) {
@@ -568,6 +565,10 @@
     }
 
     @media (481px <= width <= 768px) {
+        header h1 {
+            font-size: var(--subheading-size);
+        }
+
         main {
             flex-flow: column nowrap;
         }

@@ -249,7 +249,7 @@
     #chart-box {
         border-radius: var(--default-bradius);
         background-color: var(--background-10);
-        box-shadow: 1px 2px 2px var(--dark-text-color);
+        box-shadow: 1px 2px 2px var(--light-text-color);
     }
 
     @media (769px <= width <= 1440px) {

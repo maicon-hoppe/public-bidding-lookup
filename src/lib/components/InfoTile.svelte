@@ -111,15 +111,21 @@
         text-decoration: none;
 
         section {
-            margin: 5px;
-            border: 1px solid var(--text-color);
+            padding: 5px;
+            margin: 10px;
             border-radius: var(--default-bradius);
             background-color: var(--background-20);
-            box-shadow: 1px 2px 2px var(--dark-text-color);
+            box-shadow: 1px 1px 1px var(--light-text-color);
 
             &:hover {
+                padding: 4px;
                 border: 1px solid var(--accent-color);
-                box-shadow: 1px 1px 1px var(--dark-text-color);
+                box-shadow: 1px 1px 3px var(--light-text-color);
+            }
+
+            &:active {
+                padding: 4px;
+                border: 1px solid var(--accent-color-20);
             }
 
             header {
@@ -141,12 +147,16 @@
                     color: var(--accent-color);
                 }
 
+                h3:active {
+                    color: var(--accent-color-20);
+                }
+
                 #total_price {
                     padding: 5px 8px;
                     border-radius: 50px;
                     font-weight: bold;
 
-                    color: var(--light-text-color);
+                    color: var(--dark-text-color);
                     background-color: var(--secondary-color);
                 }
             }

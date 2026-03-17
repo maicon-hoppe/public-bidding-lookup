@@ -149,17 +149,18 @@
                         />
                     </g>
                 </svg>
-                Despesas Públicas
+                Check Licitações <sup>BR</sup>
             </h1>
         </button>
         <div>
-            <nav data-sveltekit-reload>
+            <nav class="dark-theme" data-sveltekit-reload>
                 <a href="/">Home</a>
                 <a href="/contratos">Contratos</a>
             </nav>
             <button
                 aria-label="Switch Theme"
                 id="switch-theme-button"
+                class="dark-theme"
                 onclick={() => {
                     const isDarkTheme = window.matchMedia(
                         "(prefers-color-scheme: dark)",
@@ -200,9 +201,9 @@
         <p>
             <dfn>Licitação</dfn> é o processo por meio do qual a Administração
             Pública contrata
-            <strong>obras</strong>, <strong>serviços</strong>,
-            <strong>compras</strong>
-            e <strong>alienações</strong>. Em outras palavras, licitação é a
+            <strong class="colorful">obras</strong>, <strong class="colorful">serviços</strong>,
+            <strong class="colorful">compras</strong>
+            e <strong class="colorful">alienações</strong>. Em outras palavras, licitação é a
             forma como a Administração Pública pode comprar e vender.
         </p>
         <p>
@@ -242,7 +243,7 @@
 <style>
     header {
         display: flex;
-        flex-flow: row wrap;
+        flex-flow: row nowrap;
         align-items: center;
         justify-content: space-between;
         height: 9dvh;
@@ -255,7 +256,7 @@
         );
 
         * {
-            color: var(--light-text-color);
+            color: var(--dark-text-color);
         }
 
         button:has(h1) {
@@ -264,7 +265,7 @@
 
             h1 {
                 display: flex;
-                align-items: center;
+                align-items: flex-start;
                 gap: 3px;
 
                 svg {
@@ -295,6 +296,11 @@
                 &:hover svg {
                     fill: var(--accent-color);
                     stroke: var(--accent-color);
+                }
+
+                &:active svg {
+                    fill: var(--accent-color-20);
+                    stroke: var(--accent-color-20);
                 }
             }
         }
@@ -348,8 +354,8 @@
     svg {
         height: 24px;
         width: 24px;
-        stroke: var(--light-text-color);
-        fill: var(--light-text-color);
+        stroke: var(--dark-text-color);
+        fill: var(--dark-text-color);
     }
 
     @media (769px <= width <= 1440px) {
@@ -391,7 +397,7 @@
                     position: relative;
                     left: 50dvw;
 
-                    color: var(--light-text-color);
+                    color: var(--dark-text-color);
 
                     label:has(input:checked)::after {
                         content: "●";
@@ -406,6 +412,8 @@
     }
 
     @media (481px <= width <= 768px) {
+        header h1 { font-size: var(--subheading-size); }
+
         main {
             flex-flow: column nowrap;
             height: 100dvh;

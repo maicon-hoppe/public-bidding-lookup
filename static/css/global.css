@@ -6,37 +6,48 @@
 /* Accent:    #AD6B00 - #FFBA49 */
 
 :root {
-    color-scheme: light dark;
+	color-scheme: light dark;
 
 	--primary-color: hsl(286, 61%, 29%);
 	--secondary-color: hsl(332, 38%, 45%);
 	--accent-color: light-dark(hsl(37, 100%, 34%), hsl(37, 100%, 64%));
 
+	--dark-accent-color: hsl(37, 100%, 64%);
+
 	--primary-color-20: hsl(286, 61%, 49%);
 	--secondary-color-20: hsl(332, 38%, 65%);
+	--accent-color-20: light-dark(hsl(37, 100%, 54%), hsl(37, 100%, 84%));
 
 	--background: light-dark(hsl(0 0 95), hsl(0 0 5));
 	--background-10: light-dark(hsl(0 0 85), hsl(0 0 15));
 	--background-20: light-dark(hsl(0 0 80), hsl(0 0 20));
 
 	--text-color: light-dark(hsl(0 0 10), hsl(0 0 90));
-	--light-text-color: hsl(0 0 90);
-	--dark-text-color: hsl(0 0 10);
+	--light-text-color: hsl(0 0 10);
+	--dark-text-color: hsl(0 0 90);
 
 	--text-color-20: light-dark(hsl(0 0 20), hsl(0 0 80));
-	--light-text-color-20: hsl(0 0 80);
-	--dark-text-color-20: hsl(0 0 20);
+	--light-text-color-20: hsl(0 0 20);
+	--dark-text-color-20: hsl(0 0 80);
 
-    --heading-size: 2rem;
-    --text-size: 1rem;
+	--heading-size: 2rem;
+	--subheading-size: 1.3rem;
+	--text-size: 1rem;
+	--subtext-size: 0.8rem;
 
+	--text-space: 5px;
 	--heading-space: 10px;
 
 	--default-bradius: 10px;
 }
 
-.light-theme { color-scheme: only light; }
-.dark-theme { color-scheme: only dark; }
+.light-theme {
+	color-scheme: only light;
+}
+
+.dark-theme {
+	color-scheme: only dark;
+}
 
 * {
 	padding: 0px;
@@ -47,8 +58,8 @@
 }
 
 body {
-    /* height: 100svh; */
-    /* width: 100svw; */
+	/* height: 100svh; */
+	/* width: 100svw; */
 
 	font: var(--text-size) Arial, Helvetica, sans-serif;
 	color: var(--text-color);
@@ -59,10 +70,27 @@ body {
 		font-size: var(--heading-size);
 	}
 
-	hr { border-color: var(--text-color); }
-	a { color: var(--text-color); }
-	a:hover { color: var(--accent-color) }
-	strong { color: var(--accent-color); }
+	hr {
+		border-color: var(--text-color);
+	}
+
+	a {
+		color: var(--text-color);
+	}
+
+	a:hover {
+		color: var(--accent-color)
+	}
+
+	a:active {
+		color: var(--accent-color-20);
+	}
+
+	strong.colorful {
+		color: var(--accent-color);
+	}
+
+	sup { font-size: var(--subtext-size); }
 
 	.default-button {
 		display: inline-block;
@@ -76,8 +104,9 @@ body {
 		background-color: var(--primary-color);
 		box-shadow: 1px 1px 1px hsla(0, 0%, 0%, 0.30);
 
-		&, & > a {
-			color: var(--light-text-color);
+		&,
+		&>a {
+			color: var(--dark-text-color);
 			font-size: var(--text-size);
 			font-weight: bold;
 			text-decoration: none;
@@ -87,11 +116,19 @@ body {
 			background-color: var(--primary-color-20);
 		}
 
+		&:active {
+			background-color: var(--secondary-color-20);
+		}
+
 		&.alt {
 			background-color: var(--secondary-color);
 
 			&:hover {
 				background-color: var(--secondary-color-20);
+			}
+
+			&:active {
+				background-color: var(--primary-color-20);
 			}
 		}
 
@@ -115,7 +152,10 @@ body {
 
 		&:hover {
 			background-color: var(--secondary-color);
-			svg { fill: var(--light-text-color); }
+
+			svg {
+				fill: var(--dark-text-color);
+			}
 		}
 
 		&.alt {
