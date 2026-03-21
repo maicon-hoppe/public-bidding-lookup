@@ -16,8 +16,6 @@
 
     Chart.register(BarController, BarElement);
 
-    const mqTabletScreen = new MediaQuery("(481px <= width <= 768px)");
-    const mqDesktopScreen = new MediaQuery("(769px <= width <= 1440px)");
     const mqDarkTheme = new MediaQuery("(prefers-color-scheme: dark)");
 
     const formattedLabels = $derived(
@@ -130,6 +128,7 @@
                         ticks: {
                             color: systemColors.text,
                         },
+                        grid: { display: false },
                     },
                     y: {
                         title: {
@@ -175,23 +174,6 @@
                 },
             },
         });
-
-        const textColor = mqDarkTheme.current ? "hsl(0 0 90)" : "hsl(0 0 10)";
-        const accentColor = mqDarkTheme.current
-            ? "hsl(37, 100%, 64%)"
-            : "hsl(37, 100%, 34%)";
-
-        chart.options.elements!.line!.borderColor = accentColor;
-        chart.options.elements!.point!.backgroundColor = accentColor;
-
-        chart.options.scales!.x!.title!.color = textColor;
-        chart.options.scales!.y!.title!.color = textColor;
-
-        chart.options.scales!.x!.ticks!.color = textColor;
-        chart.options.scales!.y!.ticks!.color = textColor;
-        chart.options.scales!.y!.grid!.color = textColor;
-
-        chart.options.plugins!.title!.color = textColor;
 
         const observerCallback: MutationCallback = function (
             mutationList,
@@ -267,6 +249,15 @@
             height: 43dvh;
             width: 95%;
             margin: 1dvh auto;
+        }
+    }
+
+    @media (320px <= height <= 480px) and (orientation: landscape) {
+        #chart-box {
+            height: 80dvh;
+            min-width: 90%;
+            margin: calc(10dvh - 8.5px) 5%;
+            scroll-snap-align: center;
         }
     }
 </style>

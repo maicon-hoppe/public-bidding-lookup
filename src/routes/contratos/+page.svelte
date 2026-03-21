@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { SvelteURLSearchParams } from "svelte/reactivity";
+    import { on } from "svelte/events";
+    import { MediaQuery, SvelteURLSearchParams } from "svelte/reactivity";
     import { page } from "$app/state";
     import { filterMaps } from "$lib/utils";
     import InfoTile from "$lib/components/InfoTile.svelte";
@@ -14,6 +15,22 @@
     } from "$lib/types";
 
     const { data } = $props();
+
+    const mqDesktopScreen = new MediaQuery("(769px <= width <= 1440px)");
+    const mqTabletScreen = new MediaQuery("(481px <= width <= 768px)");
+    const mqMobileScreen = new MediaQuery("(320px <= width <= 480px)");
+
+    let mainElement: HTMLElement;
+    let navigationMenu = $state<HTMLDetailsElement>();
+    $effect(() => {
+        if (mqMobileScreen.current) {
+            const off = on(mainElement, "click", (e) => {
+                navigationMenu!.open = false;
+            });
+
+            return off;
+        }
+    });
 
     let filters: FilterOptions = $state({
         textSearch: {
@@ -300,10 +317,12 @@
         </h1>
     </a>
     <div>
-        <nav class="dark-theme" data-sveltekit-reload>
-            <a href="/">Home</a>
-            <a href="/contratos">Contratos</a>
-        </nav>
+        {#if mqDesktopScreen.current || mqTabletScreen.current}
+            <nav class="dark-theme" data-sveltekit-reload>
+                <a href="/">Home</a>
+                <a href="/contratos">Contratos</a>
+            </nav>
+        {/if}
         <button
             aria-label="Switch Theme"
             id="switch-theme-button"
@@ -338,10 +357,31 @@
                 <path d="M20 12h2" />
             </svg>
         </button>
+        {#if mqMobileScreen.current}
+            <details bind:this={navigationMenu}>
+                <summary>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 -960 960 960"
+                    >
+                        <path
+                            d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"
+                        />
+                    </svg>
+                </summary>
+
+                <nav>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/contratos">Contratos</a></li>
+                    </ul>
+                </nav>
+            </details>
+        {/if}
     </div>
 </header>
 
-<main>
+<main bind:this={mainElement}>
     <ContractsFilter bind:filters />
     <div id="contract-page-selector">
         {#each { length: contractPageNumber }, page}
@@ -447,12 +487,16 @@
 
             h1 {
                 display: flex;
-                align-items: flex-start;
+                align-items: center;
                 gap: 3px;
 
                 svg {
                     height: 32px;
                     width: 32px;
+                }
+
+                sup {
+                    align-self: flex-start;
                 }
             }
         }
@@ -489,6 +533,7 @@
 
     main {
         display: flex;
+        flex-flow: column nowrap;
         min-height: 91dvh;
 
         background-color: var(--background-10);
@@ -555,8 +600,6 @@
 
     @media (769px <= width <= 1440px) {
         main {
-            flex-flow: column nowrap;
-
             #contract-list {
                 width: 90%;
                 margin: auto;
@@ -571,6 +614,79 @@
 
         main {
             flex-flow: column nowrap;
+        }
+    }
+
+    @media (320px <= width <= 480px) and (orientation: portrait) {
+        header {
+            min-height: 65px;
+
+            h1 {
+                font-size: var(--subheading-size);
+            }
+
+            details {
+                z-index: 10;
+
+                summary {
+                    margin-right: 10px;
+                    list-style: none;
+
+                    &:active svg {
+                        fill: var(--accent-color);
+                        stroke: var(--accent-color);
+                    }
+                }
+
+                nav > ul {
+                    position: absolute;
+                    right: 0px;
+
+                    user-select: none;
+
+                    list-style: none;
+                    background-color: var(--background-10);
+                    border-radius: var(--default-bradius);
+
+                    li {
+                        padding: 10px;
+                        text-align: center;
+                        box-shadow: 0px 0px 2px black;
+
+                        &:active {
+                            background-color: var(--background-20);
+                        }
+
+                        &:first-child {
+                            border-top-left-radius: var(--default-bradius);
+                            border-top-right-radius: var(--default-bradius);
+                        }
+
+                        &:last-child {
+                            border-bottom-left-radius: var(--default-bradius);
+                            border-bottom-right-radius: var(--default-bradius);
+                        }
+
+                        a {
+                            text-decoration: none;
+
+                            &:hover {
+                                color: unset;
+                            }
+
+                            &:active {
+                                color: var(--accent-color);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @media (320px <= height <= 480px) and (orientation: landscape) {
+        header {
+            min-height: 65px;
         }
     }
 </style>

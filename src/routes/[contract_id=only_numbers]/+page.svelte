@@ -1,18 +1,25 @@
 <script lang="ts">
+    import { onMount } from "svelte";
+    import { MediaQuery } from "svelte/reactivity";
     import {
         BRLCurrencyFormatter as BRLCurrency,
         BRLDateFormatter as BRLDate,
         niFormatter,
     } from "$lib/utils";
-    import { onMount } from "svelte";
 
     const { data } = $props();
+
+    const mqDesktopScreen = new MediaQuery("(769px <= width <= 1440px)");
+    const mqTabletScreen = new MediaQuery("(481px <= width <= 768px)");
+    const mqMobileScreen = new MediaQuery("(320px <= width <= 480px)");
+
+    let navigationMenu = $state<HTMLDetailsElement>();
 
     let complementaryInfo: HTMLDListElement;
     onMount(() => {
         complementaryInfo.hidden =
-            data.contract.informacoesComplementares !== null ||
-            data.contract.informacoesComplementares !== "";
+            data.contract.informacoesComplementares === null ||
+            data.contract.informacoesComplementares === "";
     });
 
     const describePurchaseMethod = function () {
@@ -67,7 +74,7 @@
     };
 </script>
 
-<header class="dark-theme">
+<header>
     <a href="/">
         <h1>
             <svg
@@ -108,13 +115,16 @@
         </h1>
     </a>
     <div>
-        <nav data-sveltekit-reload>
-            <a href="/">Home</a>
-            <a href="/contratos">Contratos</a>
-        </nav>
+        {#if mqDesktopScreen.current || mqTabletScreen.current}
+            <nav class="dark-theme" data-sveltekit-reload>
+                <a href="/">Home</a>
+                <a href="/contratos">Contratos</a>
+            </nav>
+        {/if}
         <button
             aria-label="Switch Theme"
             id="switch-theme-button"
+            class="dark-theme"
             onclick={() => {
                 const isDarkTheme = window.matchMedia(
                     "(prefers-color-scheme: dark)",
@@ -145,6 +155,27 @@
                 <path d="M20 12h2" />
             </svg>
         </button>
+        {#if mqMobileScreen.current}
+            <details bind:this={navigationMenu}>
+                <summary>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 -960 960 960"
+                    >
+                        <path
+                            d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"
+                        />
+                    </svg>
+                </summary>
+
+                <nav>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/contratos">Contratos</a></li>
+                    </ul>
+                </nav>
+            </details>
+        {/if}
     </div>
 </header>
 
@@ -188,7 +219,7 @@
                         d="M440-183v-274L200-596v274l240 139Zm80 0 240-139v-274L520-457v274Zm-40-343 237-137-237-137-237 137 237 137ZM160-252q-19-11-29.5-29T120-321v-318q0-22 10.5-40t29.5-29l280-161q19-11 40-11t40 11l280 161q19 11 29.5 29t10.5 40v318q0 22-10.5 40T800-252L520-91q-19 11-40 11t-40-11L160-252Zm320-228Z"
                     />
                 </svg>
-                Orgão Responsável:
+                Orgão Responsável
             </dt>
             <dd>{data.contract.nomeOrgao}</dd>
 
@@ -201,7 +232,7 @@
                         d="M440-183v-274L200-596v274l240 139Zm80 0 240-139v-274L520-457v274Zm-40-343 237-137-237-137-237 137 237 137ZM160-252q-19-11-29.5-29T120-321v-318q0-22 10.5-40t29.5-29l280-161q19-11 40-11t40 11l280 161q19 11 29.5 29t10.5 40v318q0 22-10.5 40T800-252L520-91q-19 11-40 11t-40-11L160-252Zm320-228Z"
                     />
                 </svg>
-                Unidade Gestora:
+                Unidade Gestora
             </dt>
             <dd>{data.contract.nomeUnidadeGestora}</dd>
 
@@ -216,7 +247,7 @@
                 </svg>
                 Fornecedor ({data.contract.niFornecedor
                     ? niFormatter(data.contract.niFornecedor)
-                    : "N/A"}):
+                    : "N/A"})
             </dt>
             <dd>{data.contract.nomeRazaoSocialFornecedor ?? "N/A"}</dd>
 
@@ -229,7 +260,7 @@
                         d="M160-200h80v-320h480v320h80v-426L480-754 160-626v426Zm-80 80v-560l400-160 400 160v560H640v-320H320v320H80Zm280 0v-80h80v80h-80Zm80-120v-80h80v80h-80Zm80 120v-80h80v80h-80ZM240-520h480-480Z"
                     />
                 </svg>
-                Unidade Compradora:
+                Unidade Compradora
             </dt>
             <dd>{data.contract.nomeUnidadeRealizadoraCompra}</dd>
         </dl>
@@ -244,7 +275,7 @@
                         d="M423.5-703.5Q400-727 400-760t23.5-56.5Q447-840 480-840t56.5 23.5Q560-793 560-760t-23.5 56.5Q513-680 480-680t-56.5-23.5ZM420-120v-480h120v480H420Z"
                     />
                 </svg>
-                Informações Complementares:
+                Informações Complementares
             </dt>
             <dd>{data.contract.informacoesComplementares || "N/A"}</dd>
         </dl>
@@ -317,12 +348,16 @@
 
             h1 {
                 display: flex;
-                align-items: flex-start;
+                align-items: center;
                 gap: 3px;
 
                 svg {
                     height: 32px;
                     width: 32px;
+                }
+
+                sup {
+                    align-self: flex-start;
                 }
             }
         }
@@ -362,7 +397,7 @@
             display: grid;
             align-items: center;
             grid-template:
-                "a . b" auto
+                "a a b" auto
                 "c c d" auto
                 "c c d" auto
                 "e e e" auto / 1fr 1fr 1fr;
@@ -438,6 +473,10 @@
                     color: var(--text-color);
                     background-color: var(--primary-color-20);
                 }
+
+                dd {
+                    text-align: right;
+                }
             }
 
             #info-display {
@@ -461,6 +500,13 @@
                 padding: 10px;
                 border: 1px solid var(--text-color-20);
                 border-radius: var(--default-bradius);
+
+                dt {
+                    margin-bottom: 3px;
+                }
+                dd {
+                    margin-left: unset;
+                }
             }
 
             #modalidade {
@@ -547,6 +593,100 @@
 
         main > #table-container {
             overflow-x: auto;
+        }
+    }
+
+    @media (320px <= width <= 480px) and (orientation: portrait) {
+        header {
+            min-height: 65px;
+
+            h1 {
+                font-size: var(--subheading-size);
+            }
+
+            details {
+                z-index: 10;
+
+                summary {
+                    margin-right: 10px;
+                    list-style: none;
+
+                    &:active svg {
+                        fill: var(--accent-color);
+                        stroke: var(--accent-color);
+                    }
+                }
+
+                nav > ul {
+                    position: absolute;
+                    right: 0px;
+
+                    user-select: none;
+
+                    list-style: none;
+                    background-color: var(--background-10);
+                    border-radius: var(--default-bradius);
+
+                    li {
+                        padding: 10px;
+                        text-align: center;
+                        box-shadow: 0px 0px 2px black;
+
+                        &:active {
+                            background-color: var(--background-20);
+                        }
+
+                        &:first-child {
+                            border-top-left-radius: var(--default-bradius);
+                            border-top-right-radius: var(--default-bradius);
+                        }
+
+                        &:last-child {
+                            border-bottom-left-radius: var(--default-bradius);
+                            border-bottom-right-radius: var(--default-bradius);
+                        }
+
+                        a {
+                            text-decoration: none;
+
+                            &:hover {
+                                color: unset;
+                            }
+
+                            &:active {
+                                color: var(--accent-color);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        main {
+            & > section#contract-summary {
+                grid-template:
+                    "a a a" auto
+                    ". . b" auto
+                    "c c c" auto
+                    "c c c" auto
+                    "d d d" auto
+                    "e e e" auto / 1fr 1fr 1fr;
+
+                #title-display > span {
+                    font-size: var(--text-size);
+                }
+            }
+
+            & > #table-container {
+                padding: 0px 5px;
+                overflow-x: auto;
+            }
+        }
+    }
+
+    @media (320px <= height <= 480px) and (orientation: landscape) {
+        header {
+            min-height: 65px;
         }
     }
 </style>

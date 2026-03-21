@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { MediaQuery } from "svelte/reactivity";
     import {
         BRLCurrencyFormatter as BRLCurrency,
         niFormatter,
@@ -7,6 +8,8 @@
     import Tooltip from "$lib/components/Tooltip.svelte";
 
     const { contract }: { contract: TableContract } = $props();
+
+    const mqMobileScreen = new MediaQuery("(320px <= width <= 480px)");
 
     const describePurchaseMethod = function () {
         switch (contract.nomeModalidadeCompra) {
@@ -62,24 +65,42 @@
 
 <a href="/{contract.id}" rel="next">
     <section>
-        <header>
+        {#if mqMobileScreen.current}
             <h3 title={contract.nomeUnidadeRealizadoraCompra}>
                 {contract.nomeUnidadeRealizadoraCompra}
             </h3>
-            <p id="total_price">{BRLCurrency.format(+contract.valorGlobal)}</p>
-        </header>
+            <p id="total_price">
+                {BRLCurrency.format(+contract.valorGlobal)}
+            </p>
+        {:else}
+            <header>
+                <h3 title={contract.nomeUnidadeRealizadoraCompra}>
+                    {contract.nomeUnidadeRealizadoraCompra}
+                </h3>
+                <p id="total_price">
+                    {BRLCurrency.format(+contract.valorGlobal)}
+                </p>
+            </header>
+        {/if}
         <main>
             <div id="catmod">
                 <dl>
                     <dt>Categoria</dt>
                     <dd>{contract.nomeCategoria}</dd>
                 </dl>
-                <Tooltip content={describePurchaseMethod()}>
+                {#if mqMobileScreen.current}
                     <dl>
                         <dt>Modalidade</dt>
                         <dd>{contract.nomeModalidadeCompra}</dd>
                     </dl>
-                </Tooltip>
+                {:else}
+                    <Tooltip content={describePurchaseMethod()}>
+                        <dl>
+                            <dt>Modalidade</dt>
+                            <dd>{contract.nomeModalidadeCompra}</dd>
+                        </dl>
+                    </Tooltip>
+                {/if}
             </div>
             <div>
                 <dl>
@@ -89,19 +110,33 @@
             </div>
             <div>
                 <dl>
-                    <dt>Fornecedor</dt>
-                    <dd>{contract.nomeRazaoSocialFornecedor ?? "N/A"}</dd>
-                    <br />
-                    <dt>Ni Fornecedor</dt>
-                    <dd>
-                        {contract.niFornecedor
-                            ? niFormatter(contract.niFornecedor)
-                            : "N/A"}
-                    </dd>
+                    {#if mqMobileScreen.current}
+                        <dt>
+                            <span>Fornecedor</span>
+                            <span>
+                                ({contract.niFornecedor
+                                    ? niFormatter(contract.niFornecedor)
+                                    : "N/A"})
+                            </span>
+                        </dt>
+                        <dd>{contract.nomeRazaoSocialFornecedor ?? "N/A"}</dd>
+                    {:else}
+                        <dt>Fornecedor</dt>
+                        <dd>{contract.nomeRazaoSocialFornecedor ?? "N/A"}</dd>
+                        <br />
+                        <dt>Ni Fornecedor</dt>
+                        <dd>
+                            {contract.niFornecedor
+                                ? niFormatter(contract.niFornecedor)
+                                : "N/A"}
+                        </dd>
+                    {/if}
                 </dl>
             </div>
-            <hr />
-            <p>{contract.objeto}</p>
+            {#if !mqMobileScreen.current}
+                <hr />
+                <p>{contract.objeto}</p>
+            {/if}
         </main>
     </section>
 </a>
@@ -170,6 +205,7 @@
 
                 #catmod {
                     display: flex;
+                    flex-flow: row wrap;
                     justify-content: space-between;
                 }
 
@@ -206,5 +242,67 @@
 
     a:hover {
         color: var(--text-color);
+    }
+
+    @media (320px <= width <= 480px) {
+        a > section {
+            &:hover {
+                padding: 5px;
+                border: none;
+                box-shadow: unset;
+            }
+
+            &:active {
+                padding: 4px;
+                border: 1px solid var(--accent-color);
+                box-shadow: 1px 1px 3px var(--light-text-color);
+            }
+
+            h3 {
+                margin: 10px;
+                text-wrap: nowrap;
+                text-overflow: ellipsis;
+                text-decoration: underline;
+                overflow: hidden;
+            }
+
+            h3:active {
+                color: var(--accent-color);
+            }
+
+            #total_price {
+                padding: 5px 8px;
+                margin: 5px 15px;
+                border-radius: 50px;
+                font-weight: bold;
+                text-align: center;
+
+                color: var(--dark-text-color);
+                background-color: var(--secondary-color);
+            }
+
+            main {
+                dl {
+                    dt,
+                    dd {
+                        display: block;
+                    }
+
+                    dt {
+                        &::after {
+                            content: "";
+                        }
+
+                        span {
+                            display: inline-block;
+                        }
+                    }
+
+                    dd {
+                        text-indent: var(--subtext-size);
+                    }
+                }
+            }
+        }
     }
 </style>

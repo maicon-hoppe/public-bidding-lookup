@@ -9,6 +9,7 @@
         LineController,
         PointElement,
         LineElement,
+        Filler,
     } from "chart.js";
     import { getRelativePosition } from "chart.js/helpers";
     import { onMount } from "svelte";
@@ -34,6 +35,7 @@
         Title,
         Tooltip,
         Legend,
+        Filler,
     );
 
     const chartData: ChartData<"line"> = $derived({
@@ -46,18 +48,23 @@
         ],
     });
 
-    const mqTabletScreen = new MediaQuery("(481px <= width <= 768px)");
     const mqDesktopScreen = new MediaQuery("(769px <= width <= 1440px)");
+    const mqTabletScreen = new MediaQuery("(481px <= width <= 768px)");
+    const mqMobileScreen = new MediaQuery("(320px <= width <= 480px)");
     const mqDarkTheme = new MediaQuery("(prefers-color-scheme: dark)");
 
     let chartCanvas: HTMLCanvasElement;
     let chart: Chart<"line">;
     onMount(() => {
         const systemColors = {
+            secondaryColor20: "hsl(332, 38%, 65%)",
             text: mqDarkTheme.current ? "hsl(0 0 90)" : "hsl(0 0 10)",
             accent: mqDarkTheme.current
                 ? "hsl(37, 100%, 64%)"
                 : "hsl(37, 100%, 34%)",
+            accentTransparent: mqDarkTheme.current
+                ? "hsla(37 100 64 / 0.5)"
+                : "hsla(37 100 34 / 0.5)",
         };
 
         const thisMonth = new SvelteDate().toLocaleDateString("pt-BR", {
@@ -178,23 +185,67 @@
             },
         };
 
-        chart = new Chart(chartCanvas, chartConfig);
+        const mobileChartConfig: ChartConfiguration<"line"> = {
+            type: "line",
+            data: chartData,
+            options: {
+                maintainAspectRatio: true,
+                responsive: true,
+                layout: { autoPadding: false },
+                elements: {
+                    line: {
+                        borderColor: systemColors.secondaryColor20,
+                        backgroundColor: systemColors.secondaryColor20,
+                        fill: true,
+                        tension: 0.3,
+                    },
+                },
+                scales: {
+                    x: { display: false },
+                    y: { display: false },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        displayColors: false,
+                        callbacks: {
+                            title: function (context) {
+                                const correctDate = new Date(
+                                    context[0].label
+                                        .split("/")
+                                        .toReversed()
+                                        .join("-"),
+                                );
+                                correctDate.setUTCHours(3);
 
-        const textColor = mqDarkTheme.current ? "hsl(0 0 90)" : "hsl(0 0 10)";
-        const accentColor = mqDarkTheme.current
-            ? "hsl(37, 100%, 64%)"
-            : "hsl(37, 100%, 34%)";
+                                return BRLDateFormatter.format(correctDate);
+                            },
+                            label: function (context) {
+                                let label = context.dataset.label ?? "";
 
-        chart.options.elements!.line!.borderColor = accentColor;
-        chart.options.elements!.point!.backgroundColor = accentColor;
+                                if (label) {
+                                    label += ": ";
+                                }
+                                if (context.parsed.y) {
+                                    label += BRLCurrencyFormatter.format(
+                                        context.parsed.y,
+                                    );
+                                } else {
+                                    label = "N/A";
+                                }
+                                return label;
+                            },
+                        },
+                    },
+                },
+            },
+        };
 
-        chart.options.scales!.x!.title!.color = textColor;
-        chart.options.scales!.y!.title!.color = textColor;
-        chart.options.scales!.x!.ticks!.color = textColor;
-        chart.options.scales!.y!.ticks!.color = textColor;
-        chart.options.scales!.y!.grid!.color = textColor;
-
-        chart.options.plugins!.title!.color = textColor;
+        if (mqMobileScreen.current) {
+            chart = new Chart(chartCanvas, mobileChartConfig);
+        } else {
+            chart = new Chart(chartCanvas, chartConfig);
+        }
 
         const observerCallback: MutationCallback = function (
             mutationList,
@@ -230,11 +281,13 @@
             chart.update();
         };
         const observer = new MutationObserver(observerCallback);
-        observer.observe(document.body, {
-            attributes: true,
-            attributeFilter: ["class"],
-            attributeOldValue: true,
-        });
+        if (mqDesktopScreen.current || mqTabletScreen.current) {
+            observer.observe(document.body, {
+                attributes: true,
+                attributeFilter: ["class"],
+                attributeOldValue: true,
+            });
+        }
 
         return function () {
             observer.disconnect();
@@ -244,6 +297,11 @@
 </script>
 
 <div id="chart-box">
+    {#if mqMobileScreen.current}
+        <span id="last-value">
+            {BRLCurrencyFormatter.format(values.at(-1)!.y!)}
+        </span>
+    {/if}
     <canvas id="graph" bind:this={chartCanvas}></canvas>
 </div>
 
@@ -269,6 +327,36 @@
             height: 43dvh;
             width: 95%;
             margin: 1dvh auto;
+        }
+    }
+
+    @media (320px <= width <= 480px) {
+        #chart-box {
+            max-height: 40dvh;
+            margin-top: auto;
+            background-color: transparent;
+
+            #last-value {
+                width: 100%;
+
+                font-family: "Courier New", Courier, monospace;
+                font-size: var(--heading-size);
+                text-align: center;
+
+                user-select: none;
+
+                position: absolute;
+                bottom: 15dvh;
+            }
+        }
+    }
+
+    @media (320px <= height <= 480px) and (orientation: landscape) {
+        #chart-box {
+            height: 80dvh;
+            min-width: 90%;
+            margin: calc(10dvh - 8.5px) 5%;
+            scroll-snap-align: center;
         }
     }
 </style>

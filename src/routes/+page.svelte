@@ -9,6 +9,12 @@
 
     const mqDesktopScreen = new MediaQuery("(769px <= width <= 1440px)");
     const mqTabletScreen = new MediaQuery("(481px <= width <= 768px)");
+    const mqMobilePortraitScreen = new MediaQuery(
+        "(320px <= width <= 480px) and (orientation: portrait)",
+    );
+    const mqMobileLandscapeScreen = new MediaQuery(
+        "(320px <= height <= 480px) and (orientation: landscape)",
+    );
 
     let headerVisible = $state(true);
     let mainElement: HTMLElement;
@@ -26,10 +32,24 @@
         }
     });
 
+    let navigationMenu = $state<HTMLDetailsElement>();
+    $effect(() => {
+        if (mqMobilePortraitScreen.current) {
+            const off = on(mainElement, "click", (e) => {
+                navigationMenu!.open = false;
+            });
+
+            return off;
+        }
+    });
+
     let graphsCarrousel = $state<HTMLDivElement>();
     let carrouselScrollPosition: 0 | 740 = $state(0);
     $effect(() => {
-        if (mqDesktopScreen.current && graphsCarrousel) {
+        if (
+            (mqDesktopScreen.current || mqMobileLandscapeScreen.current) &&
+            graphsCarrousel
+        ) {
             const scrollHandler = function () {
                 carrouselScrollPosition =
                     graphsCarrousel!.scrollLeft >= graphsCarrousel!.offsetWidth
@@ -102,12 +122,11 @@
         })),
     );
 
-    const expensesDistribution = $derived(data.expensesDistribution);
     const barChartLabels = $derived(
-        expensesDistribution.map((dataPoint) => dataPoint.part),
+        data.expensesDistribution.map((dataPoint) => dataPoint.part),
     );
     const barChartValues = $derived(
-        expensesDistribution.map((dataPoint) => dataPoint.quantity),
+        data.expensesDistribution.map((dataPoint) => dataPoint.quantity),
     );
 </script>
 
@@ -153,10 +172,12 @@
             </h1>
         </button>
         <div>
-            <nav class="dark-theme" data-sveltekit-reload>
-                <a href="/">Home</a>
-                <a href="/contratos">Contratos</a>
-            </nav>
+            {#if mqDesktopScreen.current || mqTabletScreen.current}
+                <nav class="dark-theme" data-sveltekit-reload>
+                    <a href="/">Home</a>
+                    <a href="/contratos">Contratos</a>
+                </nav>
+            {/if}
             <button
                 aria-label="Switch Theme"
                 id="switch-theme-button"
@@ -191,6 +212,27 @@
                     <path d="M20 12h2" />
                 </svg>
             </button>
+            {#if mqMobilePortraitScreen.current}
+                <details bind:this={navigationMenu}>
+                    <summary>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 -960 960 960"
+                        >
+                            <path
+                                d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"
+                            />
+                        </svg>
+                    </summary>
+
+                    <nav>
+                        <ul>
+                            <li><a href="/">Home</a></li>
+                            <li><a href="/contratos">Contratos</a></li>
+                        </ul>
+                    </nav>
+                </details>
+            {/if}
         </div>
     </header>
 {/if}
@@ -201,43 +243,53 @@
         <p>
             <dfn>Licitação</dfn> é o processo por meio do qual a Administração
             Pública contrata
-            <strong class="colorful">obras</strong>, <strong class="colorful">serviços</strong>,
+            <strong class="colorful">obras</strong>,
+            <strong class="colorful">serviços</strong>,
             <strong class="colorful">compras</strong>
-            e <strong class="colorful">alienações</strong>. Em outras palavras, licitação é a
-            forma como a Administração Pública pode comprar e vender.
+            e <strong class="colorful">alienações</strong>. Em outras palavras,
+            licitação é a forma como a Administração Pública pode comprar e
+            vender.
         </p>
         <p>
             O governo forma um <dfn>contrato</dfn> como um acordo legal para a formação
             de vínculo e a estipulação de obrigações recíprocas.
         </p>
+        <p>
+            Aqui, é possível verificar os gastos diários da União com base nos
+            contratos de despesa vigentes.
+        </p>
         <a href="/contratos" class="default-button big">Contratos</a>
     </section>
-    <section id="graphs-carousel">
-        <div id="graphs" bind:this={graphsCarrousel}>
-            <LineChart labels={lineChartLabels} values={lineChartValues} />
-            <DistributionChart
-                labels={barChartLabels}
-                values={barChartValues}
-            />
-        </div>
-        {#if mqDesktopScreen.current}
-            <div id="aside-scroll-dots">
-                {#each { length: 2 }, scrollPosition}
-                    <label for="aside_scroll_step_{scrollPosition}">
-                        <input
-                            type="radio"
-                            name="scroll-steps"
-                            id="aside_scroll_step_{scrollPosition}"
-                            checked={carrouselScrollPosition ===
-                                740 * scrollPosition}
-                            bind:group={carrouselScrollPosition}
-                            value={740 * scrollPosition}
-                        />
-                    </label>
-                {/each}
+    {#if mqDesktopScreen.current || mqTabletScreen.current}
+        <section id="graphs-carousel">
+            <div id="graphs" bind:this={graphsCarrousel}>
+                <LineChart labels={lineChartLabels} values={lineChartValues} />
+                <DistributionChart
+                    labels={barChartLabels}
+                    values={barChartValues}
+                />
             </div>
-        {/if}
-    </section>
+            {#if mqDesktopScreen.current || mqMobileLandscapeScreen.current}
+                <div id="aside-scroll-dots">
+                    {#each { length: 2 }, scrollPosition}
+                        <label for="aside_scroll_step_{scrollPosition}">
+                            <input
+                                type="radio"
+                                name="scroll-steps"
+                                id="aside_scroll_step_{scrollPosition}"
+                                checked={carrouselScrollPosition ===
+                                    740 * scrollPosition}
+                                bind:group={carrouselScrollPosition}
+                                value={740 * scrollPosition}
+                            />
+                        </label>
+                    {/each}
+                </div>
+            {/if}
+        </section>
+    {:else if mqMobilePortraitScreen.current}
+        <LineChart labels={lineChartLabels} values={lineChartValues} />
+    {/if}
 </main>
 
 <style>
@@ -265,12 +317,16 @@
 
             h1 {
                 display: flex;
-                align-items: flex-start;
+                align-items: center;
                 gap: 3px;
 
                 svg {
-                    height: 32px;
-                    width: 32px;
+                    height: 2.5rem;
+                    width: 2.5rem;
+                }
+
+                sup {
+                    align-self: flex-start;
                 }
             }
         }
@@ -284,7 +340,7 @@
                 display: flex;
                 gap: 10px;
                 font-weight: bold;
-                font-size: 1.2rem;
+                font-size: var(--subheading-size);
             }
 
             #switch-theme-button {
@@ -292,22 +348,14 @@
                 margin-right: 10px;
                 border: none;
                 background-color: transparent;
-
-                &:hover svg {
-                    fill: var(--accent-color);
-                    stroke: var(--accent-color);
-                }
-
-                &:active svg {
-                    fill: var(--accent-color-20);
-                    stroke: var(--accent-color-20);
-                }
             }
         }
     }
 
     main {
         display: flex;
+        flex-flow: column nowrap;
+        height: 91dvh;
 
         & > #intro {
             min-height: 41dvh;
@@ -321,7 +369,6 @@
                 margin: 10px 25px 0px;
 
                 color: var(--text-color-20);
-                font-size: 1.2rem;
                 text-indent: 15px;
 
                 dfn {
@@ -359,15 +406,31 @@
     }
 
     @media (769px <= width <= 1440px) {
+        header {
+            #switch-theme-button {
+                &:hover svg {
+                    fill: var(--accent-color);
+                    stroke: var(--accent-color);
+                }
+
+                &:active svg {
+                    fill: var(--accent-color-20);
+                    stroke: var(--accent-color-20);
+                }
+            }
+        }
+
         main {
-            flex-flow: column nowrap;
-            height: 91dvh;
             overflow-y: auto;
             scroll-snap-type: y proximity;
 
             #intro {
                 min-height: 91dvh;
-                padding: 22.5dvh 50px;
+                padding: 20dvh 50px;
+
+                p {
+                    font-size: var(--subheading-size);
+                }
             }
 
             #graphs-carousel {
@@ -412,10 +475,25 @@
     }
 
     @media (481px <= width <= 768px) {
-        header h1 { font-size: var(--subheading-size); }
+        header {
+            h1 {
+                font-size: var(--subheading-size);
+            }
+
+            #switch-theme-button {
+                &:hover svg {
+                    fill: var(--accent-color);
+                    stroke: var(--accent-color);
+                }
+
+                &:active svg {
+                    fill: var(--accent-color-20);
+                    stroke: var(--accent-color-20);
+                }
+            }
+        }
 
         main {
-            flex-flow: column nowrap;
             height: 100dvh;
 
             overflow-y: auto;
@@ -428,7 +506,7 @@
 
             #intro {
                 min-height: 91dvh;
-                padding: 22.5dvh 50px;
+                padding: 20dvh 50px;
                 scroll-snap-align: end;
             }
 
@@ -438,6 +516,225 @@
 
                 #graphs {
                     flex-flow: column nowrap;
+                }
+            }
+        }
+    }
+
+    @media (320px <= width <= 480px) and (orientation: portrait) {
+        header {
+            h1 {
+                font-size: var(--subheading-size);
+            }
+
+            #switch-theme-button {
+                &:hover svg {
+                    fill: var(--text-color);
+                    stroke: var(--text-color);
+                }
+
+                &:active svg {
+                    fill: var(--accent-color-20);
+                    stroke: var(--accent-color-20);
+                }
+            }
+
+            details {
+                summary {
+                    margin-right: 10px;
+                    list-style: none;
+
+                    &:active svg {
+                        fill: var(--accent-color);
+                        stroke: var(--accent-color);
+                    }
+                }
+
+                nav > ul {
+                    position: absolute;
+                    right: 0px;
+
+                    user-select: none;
+
+                    list-style: none;
+                    background-color: var(--background-10);
+                    border-radius: var(--default-bradius);
+
+                    li {
+                        padding: 10px;
+                        text-align: center;
+                        box-shadow: 0px 0px 2px black;
+
+                        &:active {
+                            background-color: var(--background-20);
+                        }
+
+                        &:first-child {
+                            border-top-left-radius: var(--default-bradius);
+                            border-top-right-radius: var(--default-bradius);
+                        }
+
+                        &:last-child {
+                            border-bottom-left-radius: var(--default-bradius);
+                            border-bottom-right-radius: var(--default-bradius);
+                        }
+
+                        a {
+                            text-decoration: none;
+
+                            &:hover {
+                                color: unset;
+                            }
+
+                            &:active {
+                                color: var(--accent-color);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        main {
+            #intro {
+                margin: 2dvh 0px;
+            }
+
+            #graphs-carousel {
+                #graphs {
+                    flex-flow: column nowrap;
+                }
+            }
+        }
+    }
+
+    @media (320px <= height <= 480px) and (orientation: landscape) {
+        header {
+            min-height: 65px;
+
+            h1 {
+                font-size: var(--subheading-size);
+            }
+
+            #switch-theme-button {
+                &:hover svg {
+                    fill: var(--text-color);
+                    stroke: var(--text-color);
+                }
+
+                &:active svg {
+                    fill: var(--accent-color-20);
+                    stroke: var(--accent-color-20);
+                }
+            }
+
+            details {
+                summary {
+                    margin-right: 10px;
+                    list-style: none;
+
+                    &:active svg {
+                        fill: var(--accent-color);
+                        stroke: var(--accent-color);
+                    }
+                }
+
+                nav > ul {
+                    position: absolute;
+                    right: 0px;
+
+                    user-select: none;
+
+                    list-style: none;
+                    background-color: var(--background-10);
+                    border-radius: var(--default-bradius);
+
+                    li {
+                        padding: 10px;
+                        text-align: center;
+                        box-shadow: 0px 0px 2px black;
+
+                        &:active {
+                            background-color: var(--background-20);
+                        }
+
+                        &:first-child {
+                            border-top-left-radius: var(--default-bradius);
+                            border-top-right-radius: var(--default-bradius);
+                        }
+
+                        &:last-child {
+                            border-bottom-left-radius: var(--default-bradius);
+                            border-bottom-right-radius: var(--default-bradius);
+                        }
+
+                        a {
+                            text-decoration: none;
+
+                            &:hover {
+                                color: unset;
+                            }
+
+                            &:active {
+                                color: var(--accent-color);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        main {
+            #intro {
+                min-height: calc(100dvh - 65px);
+                padding: 5dvh 0px;
+
+                p {
+                    font-size: var(--text-size);
+                }
+
+                a {
+                    margin-top: 5dvh;
+                }
+            }
+
+            #graphs-carousel {
+                min-height: unset;
+                width: 100%;
+                padding: 0px;
+                margin-bottom: 0dvh;
+
+                scroll-snap-align: center;
+
+                #graphs {
+                    flex-flow: row nowrap;
+                    height: 95%;
+
+                    overflow-x: auto;
+                    scroll-snap-type: x mandatory;
+
+                    scrollbar-width: none;
+                    &::-webkit-scrollbar {
+                        display: none;
+                    }
+                }
+
+                #aside-scroll-dots {
+                    display: inline;
+                    height: 5%;
+
+                    position: relative;
+                    left: 50dvw;
+
+                    color: var(--dark-text-color);
+
+                    label:has(input:checked)::after {
+                        content: "●";
+                    }
+
+                    label:not(:has(input:checked))::after {
+                        content: "○";
+                    }
                 }
             }
         }
