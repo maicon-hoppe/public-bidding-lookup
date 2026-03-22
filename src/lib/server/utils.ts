@@ -2,6 +2,7 @@ import type { Contract, TableContract } from "../types";
 
 export function contractToTableFormat(contract: Contract) {
     const tableContract: TableContract = {
+        idCompra: contract.idCompra,
         dataVigenciaInicial: new Date(contract.dataVigenciaInicial),
         dataVigenciaFinal: new Date(contract.dataVigenciaFinal),
         nomeOrgao: contract.nomeOrgao,

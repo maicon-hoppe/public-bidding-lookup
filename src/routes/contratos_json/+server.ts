@@ -20,6 +20,11 @@ export async function GET({ request }) {
             (param) => validParams.has(param)
         );
     if (requestParametersHaveCorrectShape) {
+
+        if (!Number.isInteger(requestParams.offset)) {
+            return json("offset must be a integer.");
+        }
+
         const MAX_RESPONSE_SIZE = 20;
         if (1 <= requestParams.quantity && requestParams.quantity <= MAX_RESPONSE_SIZE) {
             const dbContracts = await DB.getDBContracts(requestParams.quantity, requestParams.offset);

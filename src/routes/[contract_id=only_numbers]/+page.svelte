@@ -156,7 +156,7 @@
             </svg>
         </button>
         {#if mqMobileScreen.current}
-            <details bind:this={navigationMenu}>
+            <details aria-label="Navigation menu" bind:this={navigationMenu}>
                 <summary>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -288,39 +288,46 @@
     <p id="objeto">
         {data.contract.objeto}
     </p>
-    <div id="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th scope="colgroup" colspan="5">Despesas</th>
-                </tr>
-                <tr>
-                    <th scope="col">Quantidade</th>
-                    <th scope="col">Descrição</th>
-                    <th scope="col">Valor Unitário</th>
-                    <th scope="col">Poder</th>
-                    <th scope="col">Esfera</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#each data.contract_items as contract_item}
+
+    {#if data.contract_items.length > 0}
+        <div id="table-container">
+            <table>
+                <thead>
                     <tr>
-                        <td>{contract_item.quantidadeItem}</td>
-                        <td class="qualitative-info">
-                            {contract_item.descricaoIitem}
-                        </td>
-                        <td>
-                            {BRLCurrency.format(
-                                +contract_item.valorUnitarioItem,
-                            )}
-                        </td>
-                        <td class="qualitative-info">{contract_item.poder}</td>
-                        <td class="qualitative-info">{contract_item.esfera}</td>
+                        <th scope="colgroup" colspan="5">Despesas</th>
                     </tr>
-                {/each}
-            </tbody>
-        </table>
-    </div>
+                    <tr>
+                        <th scope="col">Quantidade</th>
+                        <th scope="col">Descrição</th>
+                        <th scope="col">Valor Unitário</th>
+                        <th scope="col">Poder</th>
+                        <th scope="col">Esfera</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each data.contract_items as contract_item}
+                        <tr>
+                            <td>{contract_item.quantidadeItem}</td>
+                            <td class="qualitative-info">
+                                {contract_item.descricaoIitem}
+                            </td>
+                            <td>
+                                {BRLCurrency.format(
+                                    +contract_item.valorUnitarioItem,
+                                )}
+                            </td>
+                            <td class="qualitative-info"
+                                >{contract_item.poder}</td
+                            >
+                            <td class="qualitative-info"
+                                >{contract_item.esfera}</td
+                            >
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+    {/if}
 </main>
 
 <style>

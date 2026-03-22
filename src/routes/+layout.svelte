@@ -5,7 +5,7 @@
 <svelte:head>
 	<link rel="stylesheet" href="/css/global.css">
 	<link rel="icon" href="/images/fav_24.svg" />
-	<title>Documento</title>
+	<title>Check Licitações BR</title>
 </svelte:head>
 
 {@render children()}

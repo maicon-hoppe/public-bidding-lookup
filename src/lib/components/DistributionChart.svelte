@@ -161,7 +161,7 @@
                         .map((value) => parseInt(value));
 
                     goto(
-                        `/contratos?despesa_minima=${selectedExpensesRange[0]}&despesa_maxima=${selectedExpensesRange[1]}`,
+                        `/contratos?despesa_minima=${selectedExpensesRange[0]}&despesa_maxima=${selectedExpensesRange[1] + 1}`,
                     );
                 },
                 plugins: {

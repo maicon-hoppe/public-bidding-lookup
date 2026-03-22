@@ -4,7 +4,7 @@ export async function getAPIContracts(
     dataVigenciaInicialMin: Date,
     dataVigenciaInicialMax: Date,
     pagina: number = 1,
-    tamanhoPagina: number = 10 // Minimum
+    tamanhoPagina: number = 10
 ) {
     let ISODate;
 

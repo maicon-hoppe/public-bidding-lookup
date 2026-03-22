@@ -358,7 +358,7 @@
             </svg>
         </button>
         {#if mqMobileScreen.current}
-            <details bind:this={navigationMenu}>
+            <details aria-label="Navigation menu" bind:this={navigationMenu}>
                 <summary>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"

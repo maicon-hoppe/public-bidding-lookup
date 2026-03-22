@@ -88,7 +88,7 @@ echo "┏———————————————————————�
 while [ $REMAINING_PAGES -gt 0 ]; do
     CONTRACTS=$(get_api_contracts $PAGE_NUMBER);
     CONTRACTS_REQUEST_TIME=$(date --utc '+%FT%T');
-    REMAINING_PAGES=$(echo $CONTRACTS | jq '.totalPaginas' 2> /dev/null);
+    REMAINING_PAGES=$(echo $CONTRACTS | jq '.paginasRestantes' 2> /dev/null);
     DEBT_CONTRACTS=$(echo $CONTRACTS \
                      | tee "contracts_invalid_response_${CONTRACTS_REQUEST_TIME}.txt" \
                      | jq '[.resultado.[] | select(.receitaDespesa=="D")]' 2> /dev/null \
@@ -120,18 +120,19 @@ while [ $REMAINING_PAGES -gt 0 ]; do
                                                                         tipo, \
                                                                         modalidade_compra, \
                                                                         id_compra \
-                                                                ) VALUES ${SQL_CONTRACTS/%,/};");
+                                                                ) VALUES ${SQL_CONTRACTS/%,/}
+                                                                ON CONFLICT DO NOTHING;");
             if [ ${#INSERTIONS} -eq 10 ];then
                 echo "$INSERTIONS                                                |"
             else
                 echo "$INSERTIONS                                               |"
             fi;
 
-            if [[ -z $FLAG ]]; then
+            if [[ -z $FLAG ]] && [[ $INSERTIONS != "INSERT 0 0" ]]; then
                 DB_CONTRACT_PURCHASES=$(echo $TABLE_CONTRACTS | jq '[.[] | pick(.idCompra, .dataVigenciaInicial)]');
 
                 PURCHASE_TOTAL=$(echo $DB_CONTRACT_PURCHASES | jq '.|length');
-                echo "┏—————————————————————— CONTRACT_ITEMS ——————————————————————┓"
+                echo "┏————————————————————— CONTRACT_ITEMS ——————————————————————┓"
                 for (( I=0; I < $PURCHASE_TOTAL; I++ )); do
                     PURCHASE_ID=$(echo $DB_CONTRACT_PURCHASES | jq -r ".[${I}].id_compra");
                     VALIDITY_DATE=$(echo $DB_CONTRACT_PURCHASES | jq ".[${I}].vigencia_inicial" | xargs date --utc '+%F' -d);
