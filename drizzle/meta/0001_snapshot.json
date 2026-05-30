@@ -1,0 +1,208 @@
+{
+  "id": "c2b541e7-30a6-4b7e-ae14-ee0617f0ae95",
+  "prevId": "0a1548c8-dbfc-45e4-9d21-a9c629ca493b",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.itens_contrato": {
+      "name": "itens_contrato",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "id_compra": {
+          "name": "id_compra",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantidade": {
+          "name": "quantidade",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valor_unitario": {
+          "name": "valor_unitario",
+          "type": "numeric(11, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descricao": {
+          "name": "descricao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "itens_contrato_id_compra_contratos_id_compra_fk": {
+          "name": "itens_contrato_id_compra_contratos_id_compra_fk",
+          "tableFrom": "itens_contrato",
+          "tableTo": "contratos",
+          "columnsFrom": [
+            "id_compra"
+          ],
+          "columnsTo": [
+            "id_compra"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.contratos": {
+      "name": "contratos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "id_compra": {
+          "name": "id_compra",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vigencia_inicial": {
+          "name": "vigencia_inicial",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vigencia_final": {
+          "name": "vigencia_final",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "orgao": {
+          "name": "orgao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unidade_gestora": {
+          "name": "unidade_gestora",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unidade_compradora": {
+          "name": "unidade_compradora",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ni_fornecedor": {
+          "name": "ni_fornecedor",
+          "type": "varchar(14)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fornecedor": {
+          "name": "fornecedor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "valor_global": {
+          "name": "valor_global",
+          "type": "numeric(11, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "objeto": {
+          "name": "objeto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "informações_complementares": {
+          "name": "informações_complementares",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "categoria": {
+          "name": "categoria",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modalidade_compra": {
+          "name": "modalidade_compra",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "esfera": {
+          "name": "esfera",
+          "type": "varchar(13)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "poder": {
+          "name": "poder",
+          "type": "varchar(13)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "contratos_id_compra_unique": {
+          "name": "contratos_id_compra_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id_compra"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "esfera_valida": {
+          "name": "esfera_valida",
+          "value": "\"contratos\".\"esfera\" IN ('Federal', 'Estadual', 'Municipal', 'Não se aplica')"
+        },
+        "poder_valido": {
+          "name": "poder_valido",
+          "value": "\"contratos\".\"poder\" IN ('Executivo', 'Legislativo', 'Judiciário', 'Não se aplica')"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

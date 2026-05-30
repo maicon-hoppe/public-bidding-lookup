@@ -21,6 +21,7 @@
     const mqMobileScreen = new MediaQuery("(320px <= width <= 480px)");
 
     let mainElement: HTMLElement;
+    let nextPageButton = $state<HTMLButtonElement>();
     let navigationMenu = $state<HTMLDetailsElement>();
     $effect(() => {
         if (mqMobileScreen.current) {
@@ -69,7 +70,7 @@
                 title: "Tipo",
                 type: "checkbox",
                 choices: [
-                    "Contrato",
+                    "Contrato (termo inicial)",
                     "Termo de Adesão",
                     "Acordo de Cooperação Técnica (ACT)",
                     "Credenciamento",
@@ -83,9 +84,15 @@
                 title: "Modalidade",
                 type: "checkbox",
                 choices: [
-                    "Pregão",
-                    "Concorrência",
+                    "Pregão - Eletrônico",
+                    "Pregão - Presencial",
+                    "Credenciamento",
+                    "Concorrência - Eletrônica",
+                    "Concorrência - Presencial",
                     "Inexigibilidade",
+                    "Leilão - Eletrônico",
+                    "Leilão - Presencial",
+                    "Pré-qualificação",
                     "Dispensa",
                     "Não se aplica",
                 ],
@@ -426,14 +433,16 @@
         {#if contractPageNumber >= 10}
             <button
                 id="next_page"
+                bind:this={nextPageButton}
                 onclick={async (_) => {
                     const fetchedPage = await fetch(
                         `/contratos_json?quantity=10&offset=1${10 * ++pageSelectorOffset}`,
                     );
+
                     ((await fetchedPage.json()) as TableContract[])
                         .filter(filterContract)
                         .forEach((newContract: TableContract) =>
-                            contracts.push(newContract),
+                            contracts.push(newContract)
                         );
 
                     const selectedPage = document.querySelector(
@@ -446,6 +455,10 @@
                     } else {
                         pageStart = 0 + 10 * pageSelectorOffset;
                         pageEnd = 9 + 10 * pageSelectorOffset;
+                    }
+
+                    if (contracts.length % 10 !== 0) {
+                        nextPageButton!.remove();
                     }
                 }}
             >

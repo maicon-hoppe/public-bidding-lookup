@@ -54,7 +54,7 @@ export const filterMaps: {
         "informatica": "Informática (TIC)",
     },
     typeFromURL: {
-        "contrato": "Contrato",
+        "contrato": "Contrato (termo inicial)",
         "termo_de_adesao": "Termo de Adesão",
         "acordo_de_cooperação_tecnica": "Acordo de Cooperação Técnica (ACT)",
         "credenciamento": "Credenciamento",
@@ -63,9 +63,15 @@ export const filterMaps: {
         "outros": "Outros",
     },
     modeFromURL: {
-        "pregao": "Pregão",
-        "concorrencia": "Concorrência",
+        "pregao_eletronico": "Pregão - Eletrônico",
+        "pregao_presencial": "Pregão - Presencial",
+        "credenciamento": "Credenciamento",
+        "concorrencia_eletronica": "Concorrência - Eletrônica",
+        "concorrencia_presencial": "Concorrência - Presencial",
         "inexigibilidade": "Inexigibilidade",
+        "leilao_eletronico": "Leilão - Eletrônico",
+        "leilao_presencial": "Leilão - Presencial",
+        "pre_qualificacao": "Pré-qualificação",
         "dispensa": "Dispensa",
         "nao_se_aplica": "Não se aplica",
     }

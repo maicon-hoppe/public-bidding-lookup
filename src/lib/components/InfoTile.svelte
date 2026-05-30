@@ -13,12 +13,13 @@
 
     const describePurchaseMethod = function () {
         switch (contract.nomeModalidadeCompra) {
-            case "Pregão":
+            case "Pregão - Presencial":
+            case "Pregão - Eletrônico":
                 return `
                     Modalidade de licitação para bens e serviços comuns — padronizados, como
                     material de escritório, combustíveis, serviços de limpeza/vigilância, ou
                     serviços comuns de engenharia —, focada em menor preço ou maior desconto,
-                    com disputa via lances sucessivos (geralmente eletrônicos), visando
+                    com disputa via lances sucessivos (eletrônicos ou presenciais), visando
                     agilidade e economia para a Administração Pública.
                 `;
 
@@ -33,7 +34,23 @@
                     necessários, emergências/calamidades ou licitações desertas/fracassadas.
                 `;
 
-            case "Concorrência":
+            case "Credenciamento":
+                return `
+                    Processo em que a Administração Pública convoca interessados em prestar
+                    serviços ou fornecer bens para que se credenciem no órgão ou na entidade
+                    para executar o objeto quando convocados; Esse é um procedimento auxiliar
+                    aos casos de inexigibilidade de licitação, onde a competição se torna
+                    inviável ou desvantajosa dada a natureza da contratação. Há três hipóteses
+                    previstas para o uso do credenciamento — quando é vantajosa a realização de
+                    contratações paralelas em condições padronizadas, caso a seleção do
+                    contratado esteja a cargo do beneficiário direto de uma prestação de
+                    serviço, ou quando a flutuação constante do valor de uma prestação e das 
+                    condições de contratação inviabiliza a seleção do fornecedor por meio de um
+                    processo de licitação.
+                `;
+
+            case "Concorrência - Eletrônica":
+            case "Concorrência - Presencial":
                 return `
                     Modalidade de licitação para contratação de bens e serviços especiais e
                     de obras e serviços comuns e especiais de engenharia, sendo utilizada
@@ -46,12 +63,36 @@
 
             case "Inexigibilidade":
                 return `
-                    Situação legal em que a Administração Pública pode realizar a ontratação
+                    Situação legal em que a Administração Pública pode realizar a contratação
                     direta de bens e serviços porque a competição é inviável, seja por só
                     existir um fornecedor ou representante comercial qualificado, ou pela
                     natureza do objeto do contrato necessitar de exclusividade. Essa
                     modalidade possui requisitos a serem seguidos e exige justificativa e
                     comprovação para evitar abusos.
+                `;
+
+            case "Leilão - Eletrônico":
+            case "Leilão - Presencial":
+                return `
+                    Modalidade de licitação para alienação de bens imóveis ou de bens móveis
+                    inservíveis ou legalmente apreendidos a quem oferecer o maior lance. A 
+                    alienação de bens da Administração Pública deve estar subordinada à
+                    existência de interesse público devidamente justificado, e deverá ser
+                    precedida de avaliação; tratando-se de bens imóveis, exigirá autorização
+                    legislativa. A fim de ampliar a publicidade e a competitividade do leilão,
+                    o seu edital deve ser previamente divulgado em sítio eletrônico oficial,
+                    dando detalhes sobre a ocorrência.
+                `;
+
+            case "Pré-qualificação":
+                return `
+                    Definida como o procedimento seletivo prévio à licitação, convocado por
+                    meio de edital, destinado à análise das condições de habilitação, total
+                    ou parcial, dos interessados ou do objeto a ser contratado. Esse
+                    instrumento confere agilidade e racionalização aos processos
+                    licitatórios, permitindo que a habilitação de potenciais fornecedores e
+                    a qualificação de produtos sejam aferidas previamento e utilizadas para
+                    licitações futuras ou até contratações diretas.
                 `;
 
             case "Não se Aplica":

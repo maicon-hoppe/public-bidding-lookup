@@ -338,6 +338,7 @@
 
             #last-value {
                 width: 100%;
+                margin-bottom: 10dvh;
 
                 font-family: "Courier New", Courier, monospace;
                 font-size: var(--heading-size);

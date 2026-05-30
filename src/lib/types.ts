@@ -61,7 +61,9 @@ export type TableContract = Pick<Contract,
     "id"?: number,
     "dataVigenciaInicial": Date,
     "dataVigenciaFinal"?: Date,
-    "valorGlobal": string
+    "valorGlobal": string,
+    esfera: 'Federal' | 'Estadual' | 'Municipal' | "Não se aplica",
+    poder: 'Executivo' | 'Legislativo' | 'Judiciário' | "Não se aplica"
 };
 
 export type TableContractItem = {
@@ -70,8 +72,6 @@ export type TableContractItem = {
     quantidadeItem: number,
     valorUnitarioItem: string,
     descricaoIitem: string,
-    esfera: 'Federal' | 'Estadual' | 'Municipal',
-    poder: 'Executivo' | 'Legislativo' | 'Judiciário'
 };
 
 export type LocalContractRequestParameters = {
@@ -108,7 +108,7 @@ export type validCategory = (
 );
 
 export type validType = (
-    "Contrato"
+    "Contrato (termo inicial)"
     | "Termo de Adesão"
     | "Acordo de Cooperação Técnica (ACT)"
     | "Credenciamento"
@@ -118,9 +118,15 @@ export type validType = (
 );
 
 export type validMode = (
-    "Pregão"
-    | "Concorrência"
+    "Pregão - Eletrônico"
+    | "Pregão - Presencial"
+    | "Credenciamento"
+    | "Concorrência - Eletrônica"
+    | "Concorrência - Presencial"
     | "Inexigibilidade"
+    | "Leilão - Eletrônico"
+    | "Leilão - Presencial"
+    | "Pré-qualificação"
     | "Dispensa"
     | "Não se aplica"
 );
@@ -156,9 +162,15 @@ export type validURLType = (
 );
 
 export type validURLMode = (
-    "pregao"
-    | "concorrencia"
+    "pregao_eletronico"
+    | "pregao_presencial"
+    | "credenciamento"
+    | "concorrencia_eletronica"
+    | "concorrencia_presencial"
     | "inexigibilidade"
+    | "leilao_eletronico"
+    | "leilao_presencial"
+    | "pre_qualificacao"
     | "dispensa"
     | "nao_se_aplica"
 );

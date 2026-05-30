@@ -242,6 +242,14 @@
 
 <main bind:this={mainElement}>
     <section id="intro">
+        <section id="reliable-warning">
+            <h3>⚠️ AVISO</h3>
+            <p>
+                Devido a mudanças em progresso no sistema de Dados Abertos e 
+                no Portal Nacional de Contratações Públicas, as informações 
+                dessa aplicação <strong>estarão incorretas</strong>.
+            </p>
+        </section>
         <h2>Licitações</h2>
         <p>
             <dfn>Licitação</dfn> é o processo por meio do qual a Administração
@@ -253,6 +261,7 @@
             licitação é a forma como a Administração Pública pode comprar e
             vender.
         </p>
+        {#if !mqMobilePortraitScreen.current}
         <p>
             O governo forma um <dfn>contrato</dfn> como um acordo legal para a formação
             de vínculo e a estipulação de obrigações recíprocas.
@@ -261,6 +270,7 @@
             Aqui, é possível verificar os gastos diários da União com base nos
             contratos de despesa vigentes.
         </p>
+        {/if}
         <a href="/contratos" class="default-button big">Contratos</a>
     </section>
     {#if mqDesktopScreen.current || mqTabletScreen.current}
@@ -364,6 +374,33 @@
             min-height: 41dvh;
             text-align: center;
 
+            #reliable-warning {
+                border-collapse: collapse;
+                border-radius: var(--default-bradius);
+                
+                h3 {
+                    padding: var(--text-space);
+                    margin: 0px;
+                    text-align: left;
+                    color: var(--light-text-color);
+                    background-color: var(--accent-color-20);
+
+                    border-top-left-radius: var(--default-bradius);
+                    border-top-right-radius: var(--default-bradius);
+                }
+
+                p {
+                    padding: 10px 15px;
+                    margin: 0px;
+                    font-size: var(--text-size);
+                    color: var(--text-color-20);
+                    background-color: var(--background-10);
+
+                    border-bottom-left-radius: var(--default-bradius);
+                    border-bottom-right-radius: var(--default-bradius);
+                }
+            }
+
             h2 {
                 margin: var(--heading-space);
             }
@@ -429,7 +466,12 @@
 
             #intro {
                 min-height: 91dvh;
-                padding: 20dvh 50px;
+                padding: 2dvh 50px 20dvh;
+
+                #reliable-warning {
+                    width: 40dvw;
+                    margin: auto auto calc(2dvh + var(--heading-space));
+                }
 
                 p {
                     font-size: var(--subheading-size);
@@ -509,8 +551,12 @@
 
             #intro {
                 min-height: 91dvh;
-                padding: 20dvh 50px;
+                padding: 2dvh 50px;
                 scroll-snap-align: end;
+
+                #reliable-warning {
+                    margin: 0px 50px calc(2dvh + var(--heading-space));
+                }
             }
 
             #graphs-carousel {
@@ -601,6 +647,11 @@
         main {
             #intro {
                 margin: 2dvh 0px;
+
+                #reliable-warning {
+                    width: 90dvw;
+                    margin: auto;
+                }
             }
 
             #graphs-carousel {

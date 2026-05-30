@@ -60,6 +60,8 @@
             tooltip.destroy();
         }
     });
+
+    $effect(() => { tooltip.setContent(content) });
 </script>
 
 <span tabindex="-1">

@@ -122,7 +122,7 @@ export async function getDBContractData(id: number) {
         ) as TableContract[]
     }
 
-    return contract_list ? contract_list[0] : null;
+    return contract_list ? contract_list[0] : undefined;
 }
 
 export async function getDBContractItems(idCompra: string) {
